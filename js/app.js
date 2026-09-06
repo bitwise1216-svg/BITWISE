@@ -656,13 +656,46 @@
         return;
       }
 
-      // Simulate submission
+      // Process submission & dispatch to Admin Dashboard Data Bridge
       var originalText = submitBtn.innerHTML;
-      submitBtn.innerHTML = '<span>Sending...</span>';
+      submitBtn.innerHTML = '<span>Sending inquiry...</span>';
       submitBtn.disabled = true;
 
+      var inquiry = {
+        id: 'inq_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7),
+        name: name.value.trim(),
+        email: email.value.trim(),
+        message: message.value.trim(),
+        timestamp: new Date().toISOString(),
+        status: 'new',
+        read: false,
+        page: window.location.pathname || '/',
+        referrer: document.referrer || 'Direct'
+      };
+
+      try {
+        var rawInquiries = localStorage.getItem('bitwise_inquiries');
+        var inquiries = rawInquiries ? JSON.parse(rawInquiries) : [];
+        inquiries.unshift(inquiry);
+        if (inquiries.length > 200) inquiries.length = 200;
+        localStorage.setItem('bitwise_inquiries', JSON.stringify(inquiries));
+
+        // Real-time broadcast to any open Dashboard tab
+        if (typeof BroadcastChannel !== 'undefined') {
+          var bridge = new BroadcastChannel('bitwise_data_bridge');
+          bridge.postMessage({ type: 'NEW_INQUIRY', data: inquiry });
+          bridge.close();
+        }
+
+        if (window.bitwiseAnalytics && typeof window.bitwiseAnalytics.trackEvent === 'function') {
+          window.bitwiseAnalytics.trackEvent('contact_inquiry_sent', { email: inquiry.email });
+        }
+      } catch (err) {
+        console.warn('[bitwise.] Error persisting inquiry:', err);
+      }
+
       setTimeout(function () {
-        submitBtn.innerHTML = '<span>Sent successfully</span>';
+        submitBtn.innerHTML = '<span>Inquiry Sent Successfully!</span>';
         submitBtn.style.background = 'var(--color-success)';
         form.reset();
 
@@ -671,7 +704,7 @@
           submitBtn.disabled = false;
           submitBtn.style.background = '';
         }, 3000);
-      }, 1500);
+      }, 900);
     });
   }
 
