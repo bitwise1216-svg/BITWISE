@@ -1,0 +1,13 @@
+# bitwise. Website
+# https://www.robotstxt.org/
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: sitemap.xml
+
+# Disallow admin/dev paths
+Disallow: /examples/
+Disallow: /.git/
+Disallow: /.agents/

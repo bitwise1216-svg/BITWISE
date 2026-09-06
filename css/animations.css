@@ -1,0 +1,285 @@
+/* ==========================================================================
+   BITWISE. ANIMATIONS — KEYFRAMES + SCROLL-DRIVEN
+   ========================================================================== */
+
+/* ── Hero Logo Pixel Build ── */
+@keyframes pixelReveal {
+  0%   { opacity: 0; transform: scale(0.8); filter: blur(8px); }
+  60%  { opacity: 1; transform: scale(1.02); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+/* ── Fade Up (general entrance) ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Fade In ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Slide In from Left ── */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-60px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Slide In from Right ── */
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(60px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Scale In ── */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Clip Reveal (wipe from left) ── */
+@keyframes clipReveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+/* ── Clip Reveal Vertical ── */
+@keyframes clipRevealUp {
+  from { clip-path: inset(100% 0 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+/* ── Marquee (infinite horizontal scroll) ── */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── Pulse (status dots) ── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(0.85); }
+}
+
+/* ── Float (subtle hover) ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* ── Rotate Chevron ── */
+@keyframes rotateChevron {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(180deg); }
+}
+
+/* ── Navbar Slide Down ── */
+@keyframes navSlideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Stagger Children (CSS-only stagger via custom property) ── */
+.stagger-item {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.stagger-item.revealed {
+  animation: fadeUp var(--dur-slow) var(--ease-out) forwards;
+  animation-delay: calc(var(--stagger-index, 0) * 80ms);
+}
+
+/* ── Scroll-triggered reveal class (applied by JS) ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity var(--dur-slow) var(--ease-out),
+              transform var(--dur-slow) var(--ease-out);
+}
+
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity var(--dur-slow) var(--ease-out),
+              transform var(--dur-slow) var(--ease-out);
+}
+
+.reveal-left.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity var(--dur-slow) var(--ease-out),
+              transform var(--dur-slow) var(--ease-out);
+}
+
+.reveal-right.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity var(--dur-slow) var(--ease-out),
+              transform var(--dur-slow) var(--ease-out);
+}
+
+.reveal-scale.revealed {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── 3D Motion Canvas ── */
+.bg-motion-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+/* ── 3D Perspective & Preservation ── */
+.perspective-container {
+  perspective: 1200px;
+  perspective-origin: center center;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* ── Multi-Plane Z-Axis Layers (Holographic Parallax) ── */
+.layer-z-10 { transform: translateZ(12px); transform-style: preserve-3d; }
+.layer-z-20 { transform: translateZ(24px); transform-style: preserve-3d; }
+.layer-z-30 { transform: translateZ(36px); transform-style: preserve-3d; }
+.layer-z-40 { transform: translateZ(48px); transform-style: preserve-3d; }
+.layer-z-50 { transform: translateZ(60px); transform-style: preserve-3d; }
+
+/* ── Specular Glare Overlay for 3D Cards ── */
+.card-3d-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  mix-blend-mode: overlay;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+/* ── Hero 3D Logo Levitation & Shadow ── */
+.hero-logo-wrapper.preserve-3d {
+  position: relative;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.hero-logo-wrapper .hero-logo {
+  display: block;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: filter 0.3s ease;
+}
+
+.hero-logo-shadow-3d {
+  position: absolute;
+  bottom: -28px;
+  left: 12%;
+  width: 76%;
+  height: 22px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(10px);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  transform-origin: center;
+  transition: transform 0.08s ease-out, opacity 0.08s ease-out;
+}
+
+/* ── 3D Keyframe Animations ── */
+@keyframes float3D {
+  0%, 100% {
+    transform: perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0px) translateZ(30px);
+  }
+  25% {
+    transform: perspective(900px) rotateX(3deg) rotateY(-3.5deg) translateY(-8px) translateZ(38px);
+  }
+  50% {
+    transform: perspective(900px) rotateX(-2.5deg) rotateY(2.5deg) translateY(-14px) translateZ(44px);
+  }
+  75% {
+    transform: perspective(900px) rotateX(2deg) rotateY(3.5deg) translateY(-6px) translateZ(34px);
+  }
+}
+
+@keyframes pulseGlow3D {
+  0%, 100% {
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.14), 0 0 30px rgba(0, 0, 0, 0.05);
+  }
+}
+
+@keyframes lightSweep3D {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes bitRotate3D {
+  0% {
+    transform: perspective(600px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  50% {
+    transform: perspective(600px) rotateX(180deg) rotateY(180deg) rotateZ(90deg);
+  }
+  100% {
+    transform: perspective(600px) rotateX(360deg) rotateY(360deg) rotateZ(180deg);
+  }
+}
+
+/* ── Magnetic 3D Buttons ── */
+.magnetic-3d-btn {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: box-shadow var(--dur-normal) var(--ease-out);
+}
+
+.magnetic-3d-btn:hover {
+  box-shadow: 0 14px 32px -6px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Reduced Motion: kill all animation ── */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger-item,
+  .hero-logo-wrapper .hero-logo, .hero-logo-shadow-3d, .preserve-3d {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+  .bg-motion-canvas {
+    display: none !important;
+  }
+}
+

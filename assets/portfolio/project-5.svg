@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgLight5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f3f4f7"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#bgLight5)"/>
+
+  <!-- Framing -->
+  <path d="M 32 52 L 32 32 L 52 32" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="1.5"/>
+  <path d="M 768 52 L 768 32 L 748 32" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="1.5"/>
+  <path d="M 32 548 L 32 568 L 52 568" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="1.5"/>
+  <path d="M 768 548 L 768 568 L 748 568" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="1.5"/>
+
+  <!-- Metadata -->
+  <text x="48" y="52" fill="rgba(0,0,0,0.6)" font-family="monospace" font-size="11" font-weight="600" letter-spacing="2">SPEC.05 // SPATIAL VOXEL CLUSTER</text>
+  <text x="752" y="52" fill="rgba(0,0,0,0.4)" font-family="monospace" font-size="11" letter-spacing="2" text-anchor="end">RENDER_TARGET: 120FPS</text>
+  <text x="48" y="556" fill="rgba(0,0,0,0.4)" font-family="monospace" font-size="10" letter-spacing="1">POLYGON_COUNT: 2.4M DISPATCHED</text>
+  <text x="752" y="556" fill="rgba(0,0,0,0.5)" font-family="monospace" font-size="10" letter-spacing="2" text-anchor="end">SWISS DIGITAL SPEC</text>
+
+  <!-- 3D Voxel Graphic (Light Architectural Tone) -->
+  <g transform="translate(400, 280)">
+    <!-- Base platform grid -->
+    <ellipse cx="0" cy="110" rx="180" ry="40" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+    <ellipse cx="0" cy="110" rx="120" ry="26" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="1"/>
+
+    <!-- Cascading Architectural Voxel Blocks -->
+    <g stroke="#0a0a0c" stroke-width="1.4">
+      <!-- Voxel 1 (Center Top) -->
+      <polygon points="0,-80 40,-60 0,-40 -40,-60" fill="rgba(0,0,0,0.08)"/>
+      <polygon points="0,-40 40,-60 40,-10 0,10" fill="rgba(0,0,0,0.03)"/>
+      <polygon points="-40,-60 0,-40 0,10 -40,-10" fill="rgba(0,0,0,0.05)"/>
+
+      <!-- Voxel 2 (Offset Left) -->
+      <polygon points="-60,-20 -20,0 -60,20 -100,0" fill="rgba(0,0,0,0.07)"/>
+      <polygon points="-60,20 -20,0 -20,50 -60,70" fill="rgba(0,0,0,0.02)"/>
+      <polygon points="-100,0 -60,20 -60,70 -100,50" fill="rgba(0,0,0,0.04)"/>
+
+      <!-- Voxel 3 (Offset Right) -->
+      <polygon points="60,-20 100,0 60,20 20,0" fill="rgba(0,0,0,0.07)"/>
+      <polygon points="60,20 100,0 100,50 60,70" fill="rgba(0,0,0,0.02)"/>
+      <polygon points="20,0 60,20 60,70 20,50" fill="rgba(0,0,0,0.04)"/>
+
+      <!-- Floating Apex Diamond in Crisp Black -->
+      <polygon points="0,-130 18,-115 0,-100 -18,-115" fill="#0a0a0c"/>
+      <polygon points="0,-100 18,-115 18,-90 0,-75" fill="rgba(0,0,0,0.6)"/>
+      <polygon points="-18,-115 0,-100 0,-75 -18,-90" fill="rgba(0,0,0,0.8)"/>
+    </g>
+  </g>
+
+  <!-- Tag Pill -->
+  <g transform="translate(400, 470)">
+    <rect x="-140" y="-16" width="280" height="32" rx="16" fill="#ffffff" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+    <text x="0" y="4" fill="rgba(0,0,0,0.8)" font-family="monospace" font-size="11" font-weight="600" letter-spacing="1.5" text-anchor="middle">VOXEL REALM // LIVE SPACE</text>
+  </g>
+</svg>
