@@ -22,10 +22,11 @@
       }
     });
 
-    document.querySelectorAll('[data-editable-img-id]').forEach(img => {
-      const id = img.getAttribute('data-editable-img-id');
+    document.querySelectorAll('[data-editable-img-id]').forEach(el => {
+      const id = el.getAttribute('data-editable-img-id');
       if (id) {
-        defaultImages[id] = img.src;
+        const img = el.tagName.toLowerCase() === 'img' ? el : el.querySelector('img');
+        defaultImages[id] = img ? img.src : '';
       }
     });
   }
@@ -50,9 +51,22 @@
       // Restore Image Sources
       if (data.images) {
         Object.keys(data.images).forEach(id => {
-          const img = document.querySelector(`[data-editable-img-id="${id}"]`);
-          if (img) {
-            img.src = data.images[id];
+          const el = document.querySelector(`[data-editable-img-id="${id}"]`);
+          if (el && data.images[id]) {
+            if (el.tagName.toLowerCase() === 'img') {
+              el.src = data.images[id];
+            } else {
+              let img = el.querySelector('img');
+              if (!img) {
+                img = document.createElement('img');
+                img.alt = id;
+                img.loading = 'lazy';
+                const placeholder = el.querySelector('.gallery-item-placeholder');
+                if (placeholder) placeholder.style.display = 'none';
+                el.appendChild(img);
+              }
+              img.src = data.images[id];
+            }
           }
         });
       }
@@ -191,10 +205,13 @@
       }
     });
 
-    document.querySelectorAll('[data-editable-img-id]').forEach(img => {
-      const id = img.getAttribute('data-editable-img-id');
+    document.querySelectorAll('[data-editable-img-id]').forEach(el => {
+      const id = el.getAttribute('data-editable-img-id');
       if (id) {
-        data.images[id] = img.src;
+        const img = el.tagName.toLowerCase() === 'img' ? el : el.querySelector('img');
+        if (img && img.src) {
+          data.images[id] = img.src;
+        }
       }
     });
 
@@ -258,9 +275,20 @@
 
       // In-place restore of images
       Object.keys(defaultImages).forEach(id => {
-        const img = document.querySelector(`[data-editable-img-id="${id}"]`);
-        if (img) {
-          img.src = defaultImages[id];
+        const el = document.querySelector(`[data-editable-img-id="${id}"]`);
+        if (el) {
+          if (el.tagName.toLowerCase() === 'img') {
+            el.src = defaultImages[id];
+          } else {
+            const img = el.querySelector('img');
+            const placeholder = el.querySelector('.gallery-item-placeholder');
+            if (defaultImages[id]) {
+              if (img) img.src = defaultImages[id];
+            } else {
+              if (img) img.remove();
+              if (placeholder) placeholder.style.display = '';
+            }
+          }
         }
       });
 
@@ -269,13 +297,16 @@
   }
 
   // 8. IMAGE SWAPPING LOGIC
-  function openImageSwapModal(imgEl) {
-    activeImageTarget = imgEl;
+  function openImageSwapModal(targetEl) {
+    activeImageTarget = targetEl;
     const modal = document.getElementById('image-swap-modal');
     const urlInput = document.getElementById('image-swap-url');
     const fileInput = document.getElementById('image-swap-file');
 
-    if (urlInput) urlInput.value = imgEl.src.startsWith('data:') ? '' : imgEl.src;
+    const img = targetEl.tagName.toLowerCase() === 'img' ? targetEl : targetEl.querySelector('img');
+    const currentSrc = img ? img.src : '';
+
+    if (urlInput) urlInput.value = currentSrc.startsWith('data:') ? '' : currentSrc;
     if (fileInput) fileInput.value = '';
 
     modal?.classList.add('active');
@@ -293,22 +324,34 @@
     const fileInput = document.getElementById('image-swap-file');
     const urlInput = document.getElementById('image-swap-url');
 
+    function commitImage(newSrc) {
+      if (activeImageTarget.tagName.toLowerCase() === 'img') {
+        activeImageTarget.src = newSrc;
+      } else {
+        let img = activeImageTarget.querySelector('img');
+        if (!img) {
+          img = document.createElement('img');
+          img.alt = activeImageTarget.getAttribute('data-editable-img-id') || 'Showcase image';
+          img.loading = 'lazy';
+          const placeholder = activeImageTarget.querySelector('.gallery-item-placeholder');
+          if (placeholder) placeholder.style.display = 'none';
+          activeImageTarget.appendChild(img);
+        }
+        img.src = newSrc;
+      }
+      showToast('Image updated successfully!');
+      saveEdits();
+      closeImageSwapModal();
+    }
+
     if (fileInput?.files && fileInput.files[0]) {
       const reader = new FileReader();
       reader.onload = function (e) {
-        if (activeImageTarget) {
-          activeImageTarget.src = e.target.result;
-          showToast('Image replaced from your local file!');
-          saveEdits();
-          closeImageSwapModal();
-        }
+        commitImage(e.target.result);
       };
       reader.readAsDataURL(fileInput.files[0]);
     } else if (urlInput && urlInput.value.trim() !== '') {
-      activeImageTarget.src = urlInput.value.trim();
-      showToast('Image replaced from URL!');
-      saveEdits();
-      closeImageSwapModal();
+      commitImage(urlInput.value.trim());
     } else {
       closeImageSwapModal();
     }
@@ -326,15 +369,14 @@
     document.getElementById('image-swap-cancel')?.addEventListener('click', closeImageSwapModal);
     document.getElementById('image-swap-apply')?.addEventListener('click', applyImageSwap);
 
-    // Listen for clicks on editable images
+    // Listen for clicks on editable images & placeholder cards
     document.addEventListener('click', (e) => {
       if (!isEditing) return;
-      const targetImg = e.target.closest('[data-editable-img-id]');
-      if (targetImg) {
+      const targetEl = e.target.closest('[data-editable-img-id]');
+      if (targetEl) {
         e.preventDefault();
         e.stopPropagation();
-        const img = targetImg.tagName.toLowerCase() === 'img' ? targetImg : targetImg.querySelector('img');
-        if (img) openImageSwapModal(img);
+        openImageSwapModal(targetEl);
       }
     });
 

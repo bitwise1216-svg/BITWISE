@@ -597,10 +597,13 @@
     var lightboxClose = document.getElementById('lightbox-close');
     if (!lightbox || !lightboxImg || !lightboxClose) return;
 
-    // Open lightbox on gallery item click (only if it has a real image)
-    document.querySelectorAll('.gallery-item img, .design-card img').forEach(function (img) {
-      img.style.cursor = 'zoom-in';
-      img.addEventListener('click', function () {
+    // Open lightbox on gallery item or design card click (only if it has a real image)
+    document.querySelectorAll('.gallery-item, .design-card').forEach(function (card) {
+      var img = card.querySelector('img');
+      if (!img) return;
+      card.style.cursor = 'zoom-in';
+      card.addEventListener('click', function (e) {
+        if (document.body.classList.contains('editing-active')) return;
         lightboxImg.src = img.src;
         lightboxImg.alt = img.alt || 'Gallery image';
         lightbox.classList.add('active');

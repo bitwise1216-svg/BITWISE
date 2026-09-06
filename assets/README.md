@@ -3,6 +3,7 @@
 Place your permanent website assets here:
 - `logo/`: Official brand logo (name it `logo.png` or `logo.svg`)
 - `images/`: General photos, pictures, illustrations (PNG, JPG, WebP)
+- `showcase/`: Design & photography showcase items (`design/`, `photography/`)
 - `backgrounds/`: Background patterns, textures, wallpapers
 - `icons/`: Icons, UI symbols, SVGs
 
