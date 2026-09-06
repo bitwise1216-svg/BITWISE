@@ -18,12 +18,78 @@ if (-not (Test-Path $assetsDesignDir)) { New-Item -ItemType Directory -Path $ass
 
 $imageExts = @('.jpg', '.jpeg', '.png', '.webp', '.avif', '.svg')
 
+Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
+
+function Copy-WebOptimizedImage {
+    param(
+        [string]$SourcePath,
+        [string]$DestPath,
+        [int]$MaxDimension = 2560,
+        [int]$Quality = 85
+    )
+
+    $ext = [System.IO.Path]::GetExtension($SourcePath).ToLower()
+    $fileSize = (Get-Item $SourcePath).Length
+
+    # For SVGs, GIFs, or small files (< 1.5MB), copy directly
+    if ($ext -eq '.svg' -or $ext -eq '.gif' -or ($fileSize -lt 1.5MB)) {
+        Copy-Item $SourcePath -Destination $DestPath -Force
+        return
+    }
+
+    try {
+        $img = [System.Drawing.Image]::FromFile($SourcePath)
+        $needsResize = ($img.Width -gt $MaxDimension -or $img.Height -gt $MaxDimension)
+        $needsCompression = ($fileSize -gt 2MB)
+
+        if (-not $needsResize -and -not $needsCompression) {
+            $img.Dispose()
+            Copy-Item $SourcePath -Destination $DestPath -Force
+            return
+        }
+
+        # Calculate new dimensions preserving aspect ratio
+        if ($needsResize) {
+            if ($img.Width -gt $img.Height) {
+                $newW = $MaxDimension
+                $newH = [int]($img.Height * ($MaxDimension / $img.Width))
+            } else {
+                $newH = $MaxDimension
+                $newW = [int]($img.Width * ($MaxDimension / $img.Height))
+            }
+        } else {
+            $newW = $img.Width
+            $newH = $img.Height
+        }
+
+        $bmp = New-Object System.Drawing.Bitmap($newW, $newH)
+        $graphics = [System.Drawing.Graphics]::FromImage($bmp)
+        $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+        $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+        $graphics.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
+        $graphics.DrawImage($img, 0, 0, $newW, $newH)
+
+        $codec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq "image/jpeg" }
+        $encoderParams = New-Object System.Drawing.Imaging.EncoderParameters(1)
+        $encoderParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality, [long]$Quality)
+
+        $bmp.Save($DestPath, $codec, $encoderParams)
+        $graphics.Dispose()
+        $bmp.Dispose()
+        $img.Dispose()
+    } catch {
+        # Fallback to normal copy if GDI+ fails
+        Copy-Item $SourcePath -Destination $DestPath -Force
+    }
+}
+
 # 1. Sync photography files
 if (Test-Path $samplesPhotoDir) {
     Get-ChildItem -Path $samplesPhotoDir -File | Where-Object { $imageExts -contains $_.Extension.ToLower() } | ForEach-Object {
         $dest = Join-Path $assetsPhotoDir $_.Name
         if (-not (Test-Path $dest) -or ($_.LastWriteTimeUtc -gt (Get-Item $dest).LastWriteTimeUtc)) {
-            Copy-Item $_.FullName -Destination $dest -Force
+            Copy-WebOptimizedImage -SourcePath $_.FullName -DestPath $dest
             Write-Host "Synced photo: $($_.Name)" -ForegroundColor Cyan
         }
     }
@@ -34,7 +100,7 @@ if (Test-Path $samplesDesignDir) {
     Get-ChildItem -Path $samplesDesignDir -File | Where-Object { $imageExts -contains $_.Extension.ToLower() } | ForEach-Object {
         $dest = Join-Path $assetsDesignDir $_.Name
         if (-not (Test-Path $dest) -or ($_.LastWriteTimeUtc -gt (Get-Item $dest).LastWriteTimeUtc)) {
-            Copy-Item $_.FullName -Destination $dest -Force
+            Copy-WebOptimizedImage -SourcePath $_.FullName -DestPath $dest
             Write-Host "Synced design: $($_.Name)" -ForegroundColor Cyan
         }
     }
