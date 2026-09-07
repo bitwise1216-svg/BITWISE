@@ -3,6 +3,11 @@
  * Seamlessly hydrates public website copy, photography showcase, graphic design carousel,
  * and founder pavilion portraits from the Executive Dashboard's synchronized data store.
  * 
+ * Supports:
+ * 1. window.BITWISE_SITE_DATA (Canonical static baseline store)
+ * 2. LocalStorage (Live overrides on the active device)
+ * 3. BroadcastChannel & Window postMessage (Real-time live bridge from Executive Dashboard)
+ * 
  * Public Facing: Zero edit buttons or editor controls on the live website.
  */
 
@@ -16,16 +21,24 @@
   const CHANNEL_NAME = 'bitwise_data_bridge';
 
   // 1. Sync All Text Elements
-  function syncAllCMSContent() {
+  function syncAllCMSContent(dataOverride) {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY_CMS);
-      if (!raw) return;
-      const cms = JSON.parse(raw);
+      let cms = dataOverride;
+      if (!cms) {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_CMS);
+          if (raw) cms = JSON.parse(raw);
+        } catch (e) {}
+      }
+      if (!cms && window.BITWISE_SITE_DATA && window.BITWISE_SITE_DATA.cms) {
+        cms = window.BITWISE_SITE_DATA.cms;
+      }
+      if (!cms) return;
 
       document.querySelectorAll('[data-editable-id]').forEach(el => {
         const id = el.getAttribute('data-editable-id');
         if (cms[id] !== undefined && cms[id] !== null && cms[id] !== '') {
-          // Check if element is an anchor with mailto or tel
+          // Anchor special handling
           if (el.tagName === 'A') {
             if (id === 'contact-email') {
               el.setAttribute('href', 'mailto:' + cms[id]);
@@ -36,6 +49,8 @@
               el.textContent = cms[id];
               return;
             }
+          }
+
           if (id.endsWith('-content')) {
             el.innerHTML = cms[id];
           } else {
@@ -50,26 +65,40 @@
 
   // 2. Sync Photography Showcase (Limit: 12 photos)
   const MAX_PHOTO_SLOTS = 12;
-  function syncPhotographyShowcase() {
+  function syncPhotographyShowcase(dataOverride) {
     const gallery = document.getElementById('photo-gallery');
     if (!gallery) return;
 
     try {
-      const raw = localStorage.getItem(STORAGE_KEY_PHOTOS);
-      let photos = [];
-      if (raw) {
-        try { photos = JSON.parse(raw); } catch (e) {}
+      let photos = dataOverride;
+      if (!photos) {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_PHOTOS);
+          if (raw) photos = JSON.parse(raw);
+        } catch (e) {}
       }
-      if (!Array.isArray(photos)) photos = [];
+      if (!photos && window.BITWISE_SITE_DATA && Array.isArray(window.BITWISE_SITE_DATA.photos)) {
+        photos = window.BITWISE_SITE_DATA.photos;
+      }
+      if (!Array.isArray(photos) || photos.length === 0) return;
+
       const validPhotos = photos.slice(0, MAX_PHOTO_SLOTS);
 
       let html = validPhotos.map((photo, index) => {
-        const src = photo.dataUrl || ('assets/showcase/photography/' + photo.name);
+        let src = photo.dataUrl;
+        if (!src) {
+          if (!photo.name) src = '';
+          else if (photo.name.startsWith('assets/') || photo.name.startsWith('http') || photo.name.startsWith('data:')) {
+            src = photo.name;
+          } else {
+            src = 'assets/showcase/photography/' + photo.name;
+          }
+        }
         let spanClass = '';
         if (photo.span === 'wide') spanClass = ' gallery-span-wide';
         else if (photo.span === 'tall') spanClass = ' gallery-span-tall';
 
-        const altText = photo.alt || ('bitwise. Photography - ' + photo.name);
+        const altText = photo.alt || ('bitwise. Photography - ' + (photo.name || 'Showcase'));
 
         return `
           <div class="gallery-item reveal-scale${spanClass}" data-editable-img-id="${photo.id || ('photo-' + (index + 1))}">
@@ -105,17 +134,23 @@
 
   // 3. Sync Graphic Design Showcase (Limit: 6 designs)
   const MAX_DESIGN_SLOTS = 6;
-  function syncGraphicDesignShowcase() {
+  function syncGraphicDesignShowcase(dataOverride) {
     const carousel = document.getElementById('design-carousel');
     if (!carousel) return;
 
     try {
-      const raw = localStorage.getItem(STORAGE_KEY_DESIGNS);
-      let designs = [];
-      if (raw) {
-        try { designs = JSON.parse(raw); } catch (e) {}
+      let designs = dataOverride;
+      if (!designs) {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_DESIGNS);
+          if (raw) designs = JSON.parse(raw);
+        } catch (e) {}
       }
-      if (!Array.isArray(designs)) designs = [];
+      if (!designs && window.BITWISE_SITE_DATA && Array.isArray(window.BITWISE_SITE_DATA.designs)) {
+        designs = window.BITWISE_SITE_DATA.designs;
+      }
+      if (!Array.isArray(designs) || designs.length === 0) return;
+
       const validDesigns = designs.slice(0, MAX_DESIGN_SLOTS);
 
       let html = validDesigns.map((item, index) => {
@@ -165,11 +200,19 @@
   }
 
   // 4. Sync Founder Portraits & Transparent Cutouts
-  function syncFounderMedia() {
+  function syncFounderMedia(dataOverride) {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY_FOUNDERS);
-      if (!raw) return;
-      const founders = JSON.parse(raw);
+      let founders = dataOverride;
+      if (!founders) {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_FOUNDERS);
+          if (raw) founders = JSON.parse(raw);
+        } catch (e) {}
+      }
+      if (!founders && window.BITWISE_SITE_DATA && window.BITWISE_SITE_DATA.founders) {
+        founders = window.BITWISE_SITE_DATA.founders;
+      }
+      if (!founders) return;
 
       // Founder 1: Aaqib
       if (founders['founder-1-img']) {
@@ -192,11 +235,18 @@
   }
 
   // Master Sync Execution
-  function syncAll() {
-    syncAllCMSContent();
-    syncPhotographyShowcase();
-    syncGraphicDesignShowcase();
-    syncFounderMedia();
+  function syncAll(bundle) {
+    if (bundle) {
+      syncAllCMSContent(bundle.cms);
+      syncPhotographyShowcase(bundle.photos);
+      syncGraphicDesignShowcase(bundle.designs);
+      syncFounderMedia(bundle.founders);
+    } else {
+      syncAllCMSContent();
+      syncPhotographyShowcase();
+      syncGraphicDesignShowcase();
+      syncFounderMedia();
+    }
   }
 
   // Real-time Bridge Listener
@@ -205,17 +255,17 @@
       try {
         const channel = new BroadcastChannel(CHANNEL_NAME);
         channel.onmessage = function (event) {
-          const { type } = event.data || {};
+          const { type, data } = event.data || {};
           if (type === 'CMS_UPDATE') {
-            syncAllCMSContent();
+            syncAllCMSContent(data);
           } else if (type === 'PHOTOS_UPDATE') {
-            syncPhotographyShowcase();
+            syncPhotographyShowcase(data);
           } else if (type === 'DESIGNS_UPDATE') {
-            syncGraphicDesignShowcase();
+            syncGraphicDesignShowcase(data);
           } else if (type === 'FOUNDERS_UPDATE') {
-            syncFounderMedia();
+            syncFounderMedia(data);
           } else if (type === 'SYNC_ALL') {
-            syncAll();
+            syncAll(data);
           }
         };
       } catch (e) {}
@@ -229,15 +279,31 @@
       else if (e.key === STORAGE_KEY_FOUNDERS) syncFounderMedia();
     });
 
-    // Window postMessage for live iframe previews
+    // Window postMessage for live iframe previews & cross-window bridge
     window.addEventListener('message', function (event) {
-      const { type } = event.data || {};
-      if (type === 'CMS_UPDATE' || type === 'SYNC_ALL') syncAll();
-      else if (type === 'PHOTOS_UPDATE') syncPhotographyShowcase();
-      else if (type === 'DESIGNS_UPDATE') syncGraphicDesignShowcase();
-      else if (type === 'FOUNDERS_UPDATE') syncFounderMedia();
+      const { type, data } = event.data || {};
+      if (type === 'CMS_UPDATE') {
+        syncAllCMSContent(data);
+      } else if (type === 'PHOTOS_UPDATE') {
+        syncPhotographyShowcase(data);
+      } else if (type === 'DESIGNS_UPDATE') {
+        syncGraphicDesignShowcase(data);
+      } else if (type === 'FOUNDERS_UPDATE') {
+        syncFounderMedia(data);
+      } else if (type === 'SYNC_ALL') {
+        syncAll(data);
+      }
     });
   }
+
+  // Export globally for direct programmatic trigger
+  window.BITWISE_SYNC = {
+    syncAll: syncAll,
+    syncCMS: syncAllCMSContent,
+    syncPhotos: syncPhotographyShowcase,
+    syncDesigns: syncGraphicDesignShowcase,
+    syncFounders: syncFounderMedia
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {

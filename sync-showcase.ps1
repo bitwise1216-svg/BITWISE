@@ -176,11 +176,41 @@ if ((Test-Path $indexPath)) {
         Set-Content -Path $indexPath -Value $newContent -Encoding UTF8
         Write-Host "Updated index.html photography gallery ($($limitedPhotoFiles.Count) photos, $($maxSlots - $limitedPhotoFiles.Count) available slots)!" -ForegroundColor Green
     }
+
+    # Update js/site-data.js photos array if file exists
+    $siteDataPath = Join-Path $root "js\site-data.js"
+    if (Test-Path $siteDataPath) {
+        try {
+            $sdContent = Get-Content -Path $siteDataPath -Raw -Encoding UTF8
+            $photoObjList = @()
+            $idx = 1
+            foreach ($file in $limitedPhotoFiles) {
+                $isTall = $false
+                try {
+                    $img = [System.Drawing.Image]::FromFile($file.FullName)
+                    if ($img.Height -gt ($img.Width * 1.15)) { $isTall = $true }
+                    $img.Dispose()
+                } catch {}
+                $spanVal = if ($isTall) { "tall" } elseif ($idx -eq 4 -or ($idx -gt 1 -and ($idx % 5 -eq 0))) { "wide" } else { "standard" }
+                $altTitle = [System.IO.Path]::GetFileNameWithoutExtension($file.Name) -replace '[-_]', ' '
+                $sizeKb = [Math]::Round((Get-Item $file.FullName).Length / 1024)
+                $sizeStr = if ($sizeKb -gt 1024) { "$([Math]::Round($sizeKb / 1024, 1)) MB" } else { "$sizeKb KB" }
+                $photoObjList += "    { id: 'photo-$idx', name: '$($file.Name)', span: '$spanVal', alt: 'bitwise. Photography - $altTitle', size: '$sizeStr' }"
+                $idx++
+            }
+            $newPhotosJson = "photos: [`n" + ($photoObjList -join ",`n") + "`n  ]"
+            $sdContent = [regex]::Replace($sdContent, '(?s)photos:\s*\[.*?\]', $newPhotosJson)
+            Set-Content -Path $siteDataPath -Value $sdContent -Encoding UTF8
+            Write-Host "Synchronized js/site-data.js photos store!" -ForegroundColor Green
+        } catch {
+            Write-Host "Notice syncing site-data.js: $_" -ForegroundColor Yellow
+        }
+    }
 }
 
 # 6. Auto-stage in git if inside repo
 try {
-    git add assets/showcase/ index.html samples/ 2>$null
+    git add assets/showcase/ index.html js/site-data.js samples/ 2>$null
     Write-Host "Auto-staged assets in Git." -ForegroundColor DarkGray
 } catch {}
 
