@@ -83,7 +83,70 @@
     }
   }
 
-  // 5. Track Pageview
+  // 5. Automated Visitor Arrival Notification to bitwise1216@gmail.com
+  function sendVisitorEmailAlert(event) {
+    const ALERT_SESSION_KEY = 'bitwise_visitor_alert_dispatched';
+    try {
+      if (sessionStorage.getItem(ALERT_SESSION_KEY)) {
+        // Already dispatched an alert for this user's browsing session
+        return;
+      }
+      sessionStorage.setItem(ALERT_SESSION_KEY, 'true');
+    } catch (e) {}
+
+    // Asynchronously resolve GeoIP with a 1.6s timeout for high speed
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(function () { controller.abort(); }, 1600) : null;
+
+    fetch('https://freeipapi.com/api/json', { signal: controller ? controller.signal : undefined })
+      .then(function (res) { return res.json(); })
+      .then(function (geo) {
+        if (timeoutId) clearTimeout(timeoutId);
+        dispatchVisitorEmail(event, geo);
+      })
+      .catch(function () {
+        if (timeoutId) clearTimeout(timeoutId);
+        dispatchVisitorEmail(event, null);
+      });
+  }
+
+  function dispatchVisitorEmail(event, geo) {
+    var locationStr = geo && geo.cityName ? (geo.cityName + ', ' + (geo.countryName || '')) : (geo && geo.countryName ? geo.countryName : 'Direct / Private');
+    var ipStr = geo && geo.ipAddress ? geo.ipAddress : 'Anonymous';
+
+    var payload = {
+      name: 'Visitor Arrival (' + (event.device || 'Web') + ')',
+      email: 'visitor@bitwise.studio',
+      visitor_alert: 'New visitor entered bitwise. studio',
+      landing_page: window.location.href || event.page || '/',
+      referrer_source: event.referrer || 'Direct',
+      device_type: event.device || 'Desktop',
+      browser: event.browser || 'Browser',
+      operating_system: event.os || 'OS',
+      screen_resolution: (event.screenWidth || window.innerWidth) + 'x' + (event.screenHeight || window.innerHeight),
+      estimated_location: locationStr,
+      visitor_ip: ipStr,
+      visitor_id: event.visitorId,
+      session_id: event.sessionId,
+      arrival_time: new Date().toLocaleString(),
+      _subject: '🌐 [BITWISE Telemetry] New Visitor Arrival - ' + (event.device || 'Visitor') + ' (' + locationStr + ')',
+      _template: 'table',
+      _captcha: 'false'
+    };
+
+    fetch('https://formsubmit.co/ajax/bitwise1216@gmail.com', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    }).catch(function (err) {
+      console.warn('[bitwise. telemetry] Visitor alert notice:', err);
+    });
+  }
+
+  // 6. Track Pageview
   function trackPageView() {
     const { device, browser, os } = detectDevice();
     const visitorId = getVisitorId();
@@ -118,7 +181,7 @@
       console.warn('[bitwise. analytics] Local storage quota reached.');
     }
 
-    // Broadcast in real-time across open tabs to the Dashboard
+    // Broadcast in real-time across open tabs & live viewport frames to the Dashboard
     if (typeof BroadcastChannel !== 'undefined') {
       try {
         const channel = new BroadcastChannel(CHANNEL_NAME);
@@ -126,6 +189,19 @@
         channel.close();
       } catch (e) {}
     }
+
+    if (window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage({ type: 'NEW_VISIT', data: event }, '*');
+      } catch (e) {}
+    }
+
+    try {
+      window.dispatchEvent(new CustomEvent('bitwise:visit', { detail: event }));
+    } catch (e) {}
+
+    // Automated entry email notification to bitwise1216@gmail.com
+    sendVisitorEmailAlert(event);
   }
 
   // 6. Track Session Duration on Exit
@@ -146,11 +222,37 @@
     } catch (e) {}
   });
 
+  // 7. Dynamic Google Analytics (GA4) Integration
+  function initGoogleAnalytics() {
+    try {
+      const gaId = localStorage.getItem('bitwise_google_analytics_id');
+      if (!gaId || !/^G-[A-Z0-9]+$/i.test(gaId.trim())) return;
+
+      if (window._gaInitialized) return;
+      window._gaInitialized = true;
+
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaId.trim());
+      document.head.appendChild(script);
+
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ dataLayer.push(arguments); }
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', gaId.trim(), { anonymize_ip: true });
+    } catch (e) {}
+  }
+
   // Run automatically on page load
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', trackPageView);
+    document.addEventListener('DOMContentLoaded', function () {
+      trackPageView();
+      initGoogleAnalytics();
+    });
   } else {
     trackPageView();
+    initGoogleAnalytics();
   }
 
   // Expose global API

@@ -1,5 +1,5 @@
-/* ==========================================================================
-   BITWISE. COMPONENTS — MONOCHROME PREMIUM
+﻿/* ==========================================================================
+   BITWISE. COMPONENTS - MONOCHROME PREMIUM
    All section styles for the website rebuild.
    ========================================================================== */
 
@@ -438,7 +438,7 @@
    ========================================================================== */
 
 /* ==========================================================================
-   5. FOUNDERS / TEAM — ARCHITECTURAL DEPTH PAVILION
+   5. FOUNDERS / TEAM - ARCHITECTURAL DEPTH PAVILION
    Tri-Portal Panoramic Stage with Expanding Spring Physics,
    First-Name-Only Bebas Neue Depth Typography, and Stereoscopic 3D Parallax.
    ========================================================================== */
@@ -1446,6 +1446,31 @@
 
 .form-submit {
   align-self: flex-start;
+}
+
+.contact-status-msg {
+  display: none;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-xs);
+  transition: all var(--dur-normal) var(--ease-out);
+}
+
+.contact-status-msg.is-success {
+  display: block;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #15803d;
+  font-weight: 500;
+}
+
+.contact-status-msg.is-error {
+  display: block;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #b91c1c;
 }
 
 @media (max-width: 768px) {

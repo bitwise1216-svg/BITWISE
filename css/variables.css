@@ -1,5 +1,5 @@
-/* ==========================================================================
-   BITWISE. DESIGN TOKENS — MONOCHROME PREMIUM
+﻿/* ==========================================================================
+   BITWISE. DESIGN TOKENS - MONOCHROME PREMIUM
    Light-mode only. Black & white with grey accents.
    ========================================================================== */
 
@@ -23,7 +23,7 @@
   --color-border-dark:   #2A2A2A;
   --color-border-subtle: #F0F0F0;
 
-  /* ── Accent (monochrome — black IS the accent) ── */
+  /* ── Accent (monochrome - black IS the accent) ── */
   --color-accent:        #111111;
   --color-accent-hover:  #333333;
   --color-accent-light:  #F5F5F5;

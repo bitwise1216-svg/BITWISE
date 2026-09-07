@@ -53,7 +53,6 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/editor.css">
 
   <!-- Local Business Schema (JSON-LD) -->
   <script type="application/ld+json">
@@ -152,8 +151,8 @@
       </ul>
 
       <div class="nav-cta">
-        <a href="#contact" class="nav-cta-btn">
-          <span>Start a Project</span>
+        <a href="contact.html" class="nav-cta-btn">
+          <span data-editable-id="nav-cta-text">Start a Project</span>
           <span class="btn-arrow" aria-hidden="true">&rarr;</span>
         </a>
         <button type="button" class="mobile-toggle" id="mobile-toggle" aria-label="Open menu">
@@ -620,34 +619,29 @@
             </div>
           </div>
 
-          <form class="contact-form reveal" id="contact-form" novalidate>
-            <div class="form-group">
-              <label for="contact-name">Full Name <span class="required" aria-label="required">*</span></label>
-              <input type="text" id="contact-name" name="name" class="form-input" placeholder="Your full name" required autocomplete="name">
+          <div class="contact-action-card reveal" style="background: var(--color-surface, #F4F4F6); border: 1px solid var(--color-border, #E4E4E7); border-radius: var(--radius-lg, 16px); padding: clamp(28px, 5vw, 42px); display: flex; flex-direction: column; justify-content: space-between; gap: 28px;">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-muted, #71717A); margin-bottom: 14px;">
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: #10B981; box-shadow: 0 0 8px rgba(16,185,129,0.6);"></span>
+                <span>Studio Availability: Active</span>
+              </div>
+              <h3 style="font-family: var(--font-display, 'Bebas Neue', sans-serif); font-size: 2.2rem; letter-spacing: 0.03em; line-height: 1.1; margin-bottom: 12px;" data-editable-id="contact-card-title">Launch an Inquiry</h3>
+              <p style="font-size: 0.95rem; color: var(--color-text-muted, #71717A); line-height: 1.6;" data-editable-id="contact-card-desc">
+                Tell us about your brand vision, target timeline, and deliverables. Fill out our official project inquiry form and our team will get back to you within 24 hours.
+              </p>
             </div>
 
-            <div class="form-group">
-              <label for="contact-email-input">Email Address <span class="required" aria-label="required">*</span></label>
-              <input type="email" id="contact-email-input" name="email" class="form-input" placeholder="your@email.com" required autocomplete="email">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <a href="contact.html" class="btn-primary" style="padding: 16px 36px; font-size: 0.95rem; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%;">
+                <span data-editable-id="contact-btn-text">Start Project Inquiry</span>
+                <span class="btn-arrow" aria-hidden="true">&rarr;</span>
+              </a>
+              <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--color-text-muted, #71717A); padding: 0 4px;">
+                <span>✓ Verified Studio Bridge</span>
+                <span>✓ Rapid Consultation</span>
+              </div>
             </div>
-
-            <div class="form-group">
-              <label for="contact-message">Your Message <span class="required" aria-label="required">*</span></label>
-              <textarea id="contact-message" name="message" class="form-textarea" placeholder="Tell us about your project..." required></textarea>
-            </div>
-
-            <div class="form-consent">
-              <input type="checkbox" id="consent-checkbox" name="consent" required>
-              <label for="consent-checkbox">
-                I agree to the <a href="privacy.html">Privacy Policy</a> and consent to bitwise. storing my data to respond to this inquiry.
-              </label>
-            </div>
-
-            <button type="submit" class="btn-primary form-submit">
-              <span>Send Inquiry</span>
-              <span class="btn-arrow" aria-hidden="true">&rarr;</span>
-            </button>
-          </form>
+          </div>
         </div>
       </div>
     </section>
@@ -730,21 +724,21 @@
 
   <!-- Mobile Sticky CTA -->
   <div class="mobile-sticky-cta" id="mobile-sticky-cta">
-    <a href="#contact" class="btn-primary">
-      <span>Start a Project</span>
+    <a href="contact.html" class="btn-primary">
+      <span data-editable-id="mobile-cta-text">Start a Project</span>
       <span class="btn-arrow" aria-hidden="true">&rarr;</span>
     </a>
   </div>
 
   <!-- Scripts -->
   <script src="js/analytics.js"></script>
+  <script src="js/content-sync.js"></script>
   <script src="js/bg-motion-3d.js"></script>
-  <script src="js/three-d-cards.js"></script>
   <script src="js/founders-pavilion.js"></script>
-  <script src="js/apple-fluid.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
+
 
 
 

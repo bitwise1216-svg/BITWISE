@@ -1,5 +1,5 @@
-/**
- * bitwise. — 3D Motion Graphic Background Engine
+﻿/**
+ * bitwise. - 3D Motion Graphic Background Engine
  * High-performance 3D particle lattice, rotating geometric wireframes,
  * mouse-interactive perspective camera, and scroll-driven depth flythrough.
  * Zero external dependencies. Hardware-accelerated Canvas 3D mathematics.

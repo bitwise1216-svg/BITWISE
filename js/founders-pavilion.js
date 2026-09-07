@@ -1,5 +1,5 @@
-/**
- * bitwise. — Architectural Depth Pavilion Controller
+﻿/**
+ * bitwise. - Architectural Depth Pavilion Controller
  * Multi-plane stereoscopic parallax, dynamic column spring physics,
  * Bebas Neue first-name depth occlusion, and mobile segmented switcher.
  */
