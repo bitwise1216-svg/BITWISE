@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    BITWISE. COMPONENTS - MONOCHROME PREMIUM
    All section styles for the website rebuild.
    ========================================================================== */
@@ -292,52 +292,6 @@
 
 .hero-cta-group.animated {
   animation: fadeUp 0.8s var(--ease-out) forwards;
-}
-
-.hero-scroll-indicator {
-  position: absolute;
-  bottom: var(--space-2xl);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-sm);
-  opacity: 0;
-  animation: fadeIn 1s var(--ease-out) 2s forwards;
-}
-
-.hero-scroll-indicator .scroll-line {
-  width: 1px;
-  height: 40px;
-  background: var(--color-border);
-  position: relative;
-  overflow: hidden;
-}
-
-.hero-scroll-indicator .scroll-line::after {
-  content: '';
-  position: absolute;
-  top: -100%;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--color-accent);
-  animation: scrollDash 2s var(--ease-in-out) infinite;
-}
-
-@keyframes scrollDash {
-  0%   { top: -100%; }
-  50%  { top: 100%; }
-  100% { top: 100%; }
-}
-
-.hero-scroll-label {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-text-subtle);
 }
 
 /* ==========================================================================
