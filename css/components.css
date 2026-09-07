@@ -402,36 +402,6 @@
   overflow: hidden;
 }
 
-/* Mobile / Tablet Segmented Selector */
-.pavilion-pills {
-  display: none;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: var(--space-2xl);
-  z-index: 10;
-  position: relative;
-}
-
-.pavilion-pill {
-  font-family: 'Bebas Neue', var(--font-mono);
-  font-size: 1rem;
-  letter-spacing: 0.12em;
-  padding: 8px 22px;
-  border-radius: var(--radius-pill);
-  background: var(--material-thin);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
-}
-
-.pavilion-pill.active {
-  background: var(--color-accent);
-  color: #FFFFFF;
-  border-color: var(--color-accent);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-  transform: scale(1.04);
-}
 
 /* ── The Master Architectural Pavilion ── */
 .founders-pavilion {
@@ -718,52 +688,112 @@
   }
 }
 
-/* ── Mobile / Tablet Responsive Mode ── */
+/* ── Mobile / Tablet Responsive Mode (All 3 Founders Shown Concurrently) ── */
 @media (max-width: 900px) {
-  .pavilion-pills {
-    display: flex;
-  }
-
   .founders-pavilion {
-    height: 560px;
-    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    max-width: 540px;
+    gap: var(--space-2xl);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
   }
 
   .pavilion-portal {
-    display: none;
-    flex: 1 1 100%;
+    display: flex !important;
+    width: 100%;
+    height: 520px;
+    border-radius: var(--radius-2xl);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 248, 248, 0.88) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.09), 0 1px 1px rgba(255, 255, 255, 0.9) inset;
+    overflow: hidden;
+    position: relative;
     border-right: none;
+    opacity: 1 !important;
   }
 
-  .pavilion-portal.active {
-    display: flex;
-    animation: portalFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  .portal-inner {
+    width: 100%;
+    height: 100%;
   }
 
   .portal-depth-name {
-    font-size: clamp(4.8rem, 20vw, 7.5rem);
+    font-size: clamp(5rem, 24vw, 8rem);
     top: 10%;
   }
 
   .portal-subject-wrapper {
-    height: 85%;
+    height: 84%;
+  }
+
+  .portal-dossier {
+    width: 100%;
+    padding: 20px 24px 24px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.96) 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .dossier-name {
+    font-size: 1.5rem;
+    margin: 0 0 2px;
+  }
+
+  .dossier-role {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
   }
 
   .dossier-bio {
-    max-height: 100px;
+    max-height: 120px;
     opacity: 1;
     margin-top: 6px;
+    font-size: 0.84rem;
+    line-height: 1.55;
   }
 }
 
-@keyframes portalFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97) translateY(12px);
+@media (max-width: 480px) {
+  .founders-pavilion {
+    gap: var(--space-xl);
   }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
+
+  .pavilion-portal {
+    height: 480px;
+    border-radius: var(--radius-xl);
+  }
+
+  .portal-depth-name {
+    font-size: clamp(4.2rem, 20vw, 6.2rem);
+    top: 8%;
+  }
+
+  .portal-subject-wrapper {
+    height: 80%;
+  }
+
+  .portal-dossier {
+    padding: 16px 18px 20px;
+  }
+
+  .dossier-name {
+    font-size: 1.35rem;
+  }
+
+  .dossier-role {
+    font-size: 0.82rem;
+  }
+
+  .dossier-bio {
+    font-size: 0.8rem;
   }
 }
 
