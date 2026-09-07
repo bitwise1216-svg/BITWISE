@@ -51,7 +51,7 @@
             }
           }
 
-          if (id.endsWith('-content')) {
+          if (id.endsWith('-content') || id === 'footer-copy') {
             el.innerHTML = cms[id];
           } else {
             el.textContent = cms[id];
@@ -88,7 +88,7 @@
         let src = photo.dataUrl;
         if (!src) {
           if (!photo.name) src = '';
-          else if (photo.name.startsWith('assets/') || photo.name.startsWith('http') || photo.name.startsWith('data:')) {
+          else if (photo.name.startsWith('assets/') || photo.name.startsWith('http') || photo.name.startsWith('data:') || photo.name.startsWith('/')) {
             src = photo.name;
           } else {
             src = 'assets/showcase/photography/' + photo.name;
