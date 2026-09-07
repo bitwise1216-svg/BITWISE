@@ -48,18 +48,22 @@
     }
   }
 
-  // 2. Sync Photography Showcase
+  // 2. Sync Photography Showcase (Limit: 12 photos)
+  const MAX_PHOTO_SLOTS = 12;
   function syncPhotographyShowcase() {
     const gallery = document.getElementById('photo-gallery');
     if (!gallery) return;
 
     try {
       const raw = localStorage.getItem(STORAGE_KEY_PHOTOS);
-      if (!raw) return;
-      const photos = JSON.parse(raw);
-      if (!Array.isArray(photos) || !photos.length) return;
+      let photos = [];
+      if (raw) {
+        try { photos = JSON.parse(raw); } catch (e) {}
+      }
+      if (!Array.isArray(photos)) photos = [];
+      const validPhotos = photos.slice(0, MAX_PHOTO_SLOTS);
 
-      gallery.innerHTML = photos.map((photo, index) => {
+      let html = validPhotos.map((photo, index) => {
         const src = photo.dataUrl || ('assets/showcase/photography/' + photo.name);
         let spanClass = '';
         if (photo.span === 'wide') spanClass = ' gallery-span-wide';
@@ -74,6 +78,22 @@
         `;
       }).join('');
 
+      // Keep space for remaining slots up to 12
+      for (let i = validPhotos.length; i < MAX_PHOTO_SLOTS; i++) {
+        const slotNum = i + 1;
+        const formattedNum = slotNum < 10 ? '0' + slotNum : slotNum;
+        html += `
+          <div class="gallery-item gallery-item-slot reveal-scale" data-editable-img-id="photo-${slotNum}">
+            <div class="gallery-item-placeholder slot-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <span>Photo ${formattedNum} // Available</span>
+            </div>
+          </div>
+        `;
+      }
+
+      gallery.innerHTML = html;
+
       // Rebind lightbox if initLightbox is available
       if (typeof window.rebindLightbox === 'function') {
         window.rebindLightbox();
@@ -83,18 +103,22 @@
     }
   }
 
-  // 3. Sync Graphic Design Showcase
+  // 3. Sync Graphic Design Showcase (Limit: 6 designs)
+  const MAX_DESIGN_SLOTS = 6;
   function syncGraphicDesignShowcase() {
     const carousel = document.getElementById('design-carousel');
     if (!carousel) return;
 
     try {
       const raw = localStorage.getItem(STORAGE_KEY_DESIGNS);
-      if (!raw) return;
-      const designs = JSON.parse(raw);
-      if (!Array.isArray(designs) || !designs.length) return;
+      let designs = [];
+      if (raw) {
+        try { designs = JSON.parse(raw); } catch (e) {}
+      }
+      if (!Array.isArray(designs)) designs = [];
+      const validDesigns = designs.slice(0, MAX_DESIGN_SLOTS);
 
-      carousel.innerHTML = designs.map((item, index) => {
+      let html = validDesigns.map((item, index) => {
         const imgHtml = item.image
           ? `<img src="${item.image}" alt="${item.title || 'Design Project'}" style="width:100%; height:100%; object-fit:cover;">`
           : `<div class="gallery-item-placeholder">
@@ -115,6 +139,21 @@
           </div>
         `;
       }).join('');
+
+      // Keep space for remaining slots up to 6
+      for (let i = validDesigns.length; i < MAX_DESIGN_SLOTS; i++) {
+        const slotNum = i + 1;
+        html += `
+          <div class="design-card" data-editable-img-id="design-${slotNum}">
+            <div class="gallery-item-placeholder">
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <span>Design ${slotNum}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      carousel.innerHTML = html;
 
       // Rebind lightbox if available
       if (typeof window.rebindLightbox === 'function') {

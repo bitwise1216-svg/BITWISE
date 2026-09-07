@@ -119,13 +119,16 @@ $manifest = @{
 $manifest | ConvertTo-Json -Depth 4 | Set-Content -Path $manifestPath -Encoding UTF8
 Write-Host "Generated manifest: $manifestPath" -ForegroundColor Green
 
-# 5. Update index.html photography gallery
-if ((Test-Path $indexPath) -and $photoFiles.Count -gt 0) {
+# 5. Update index.html photography gallery (12 Slots Limit)
+if ((Test-Path $indexPath)) {
     [System.Reflection.Assembly]::LoadWithPartialName("System.Drawing") | Out-Null
 
+    $maxSlots = 12
+    $limitedPhotoFiles = @($photoFiles | Select-Object -First $maxSlots)
     $galleryHtml = ""
     $i = 1
-    foreach ($file in $photoFiles) {
+
+    foreach ($file in $limitedPhotoFiles) {
         $imgId = "photo-$i"
         $relPath = "assets/showcase/photography/$($file.Name)"
         $isTall = $false
@@ -153,6 +156,17 @@ if ((Test-Path $indexPath) -and $photoFiles.Count -gt 0) {
         $i++
     }
 
+    # Add placeholders for remaining slots up to 12
+    for ($s = $i; $s -le $maxSlots; $s++) {
+        $slotPad = if ($s -lt 10) { "0$s" } else { "$s" }
+        $galleryHtml += "          <div class=`"gallery-item gallery-item-slot reveal-scale`" data-editable-img-id=`"photo-$s`">`n"
+        $galleryHtml += "            <div class=`"gallery-item-placeholder slot-placeholder`">`n"
+        $galleryHtml += "              <svg viewBox=`"0 0 24 24`" fill=`"none`" stroke=`"currentColor`" stroke-width=`"1.5`"><path d=`"M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z`"/><circle cx=`"12`" cy=`"13`" r=`"4`"/></svg>`n"
+        $galleryHtml += "              <span>Photo $slotPad // Available</span>`n"
+        $galleryHtml += "            </div>`n"
+        $galleryHtml += "          </div>`n"
+    }
+
     # Replace in index.html between <div class="photo-gallery-grid" id="photo-gallery"> and its closing </div>
     $content = Get-Content -Path $indexPath -Raw -Encoding UTF8
     $pattern = '(?s)(<div class="photo-gallery-grid" id="photo-gallery">)(.*?)(</div>\s*</div>\s*</section>)'
@@ -160,7 +174,7 @@ if ((Test-Path $indexPath) -and $photoFiles.Count -gt 0) {
         $replacement = "`$1`n$galleryHtml        `$3"
         $newContent = [regex]::Replace($content, $pattern, $replacement)
         Set-Content -Path $indexPath -Value $newContent -Encoding UTF8
-        Write-Host "Updated index.html photography gallery with $($photoFiles.Count) photos!" -ForegroundColor Green
+        Write-Host "Updated index.html photography gallery ($($limitedPhotoFiles.Count) photos, $($maxSlots - $limitedPhotoFiles.Count) available slots)!" -ForegroundColor Green
     }
 }
 
