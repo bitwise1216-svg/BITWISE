@@ -1,15 +1,21 @@
-﻿{
-    "photography":  [
-                        "_56I9162.jpg",
-                        "_F8A6782.jpg",
-                        "DSC00168.jpg",
-                        "DSC00477.jpg",
-                        "DSC00586.jpg",
-                        "DSC00830.jpg",
-                        "DSC00847.jpg"
-                    ],
-    "updatedAt":  "2026-09-08T00:28:13.7250820+05:30",
-    "design":  [
-
-               ]
+{
+  "photography": [
+    "DSC00168.jpg",
+    "DSC00477.jpg",
+    "DSC00586.jpg",
+    "DSC00830.jpg",
+    "DSC01253.jpg",
+    "DSC01251.jpg",
+    "DSC_0387.jpg",
+    "DSC_0603.jpg",
+    "DSC00768.jpg",
+    "DSC00599.jpg",
+    "DSC01280.jpg"
+  ],
+  "design": [
+    "Brand Architecture",
+    "Cinematic Motion Systems",
+    "Architectural Exhibition"
+  ],
+  "updatedAt": "2026-09-07T19:02:53.372Z"
 }
