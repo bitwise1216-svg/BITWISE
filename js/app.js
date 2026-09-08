@@ -367,38 +367,63 @@
     // Founders Pavilion: cinematic entrance with scale and staggered portals
     var pavilion = document.getElementById('founders-pavilion');
     if (pavilion) {
-      gsap.fromTo(pavilion,
-        { opacity: 0, y: 40, scale: 0.98 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 1.1,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: pavilion,
-            start: 'top 85%',
-            once: true,
+      var isMobile = window.innerWidth <= 900;
+
+      if (!isMobile) {
+        // Desktop Stage entrance
+        gsap.fromTo(pavilion,
+          { opacity: 0, y: 40, scale: 0.98 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 1.1,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: pavilion,
+              start: 'top 85%',
+              once: true,
+            }
           }
-        }
-      );
+        );
+      }
 
       var portals = pavilion.querySelectorAll('.pavilion-portal');
       portals.forEach(function (portal, i) {
         var subject = portal.querySelector('.portal-subject-img');
         var depthName = portal.querySelector('.portal-depth-name');
+        var targetTrigger = isMobile ? portal : pavilion;
+
+        if (isMobile) {
+          // Mobile card reveal per founder
+          gsap.fromTo(portal,
+            { opacity: 0, y: 35 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.85,
+              ease: 'power3.out',
+              scrollTrigger: {
+                trigger: portal,
+                start: 'top 88%',
+                once: true,
+              }
+            }
+          );
+        }
+
         if (subject) {
           gsap.fromTo(subject,
-            { opacity: 0, y: 50, scale: 0.92 },
+            { opacity: 0, y: isMobile ? 30 : 50, scale: isMobile ? 0.96 : 0.92 },
             {
               opacity: 1,
               y: 0,
               scale: 1,
-              duration: 1.2,
-              delay: 0.2 + i * 0.15,
+              duration: 1.1,
+              delay: isMobile ? 0.1 : (0.2 + i * 0.15),
               ease: 'power3.out',
               scrollTrigger: {
-                trigger: pavilion,
+                trigger: targetTrigger,
                 start: 'top 85%',
                 once: true,
               }
@@ -407,16 +432,16 @@
         }
         if (depthName) {
           gsap.fromTo(depthName,
-            { opacity: 0, y: -25, scale: 1.08 },
+            { opacity: 0, y: isMobile ? -15 : -25, scale: isMobile ? 1.04 : 1.08 },
             {
               opacity: 0.88,
               y: 0,
               scale: 1,
-              duration: 1.3,
-              delay: 0.1 + i * 0.15,
+              duration: 1.2,
+              delay: isMobile ? 0.05 : (0.1 + i * 0.15),
               ease: 'power3.out',
               scrollTrigger: {
-                trigger: pavilion,
+                trigger: targetTrigger,
                 start: 'top 85%',
                 once: true,
               }
@@ -846,5 +871,12 @@
 
     observer.observe(hero);
   }
+
+  // Refresh ScrollTrigger calculations after full page assets load
+  window.addEventListener('load', function () {
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh();
+    }
+  });
 
 })();

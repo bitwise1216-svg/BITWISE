@@ -691,55 +691,100 @@
 /* ── Mobile / Tablet Responsive Mode (All 3 Founders Shown Concurrently) ── */
 @media (max-width: 900px) {
   .founders-pavilion {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    max-width: 540px;
-    gap: var(--space-2xl);
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    overflow: visible;
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    max-width: 540px !important;
+    width: 100% !important;
+    gap: var(--space-2xl) !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    perspective: none !important;
+    transform: none !important;
   }
 
   .pavilion-portal {
     display: flex !important;
-    width: 100%;
-    height: 520px;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-height: 520px !important;
+    height: 520px !important;
     border-radius: var(--radius-2xl);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 248, 248, 0.88) 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.09), 0 1px 1px rgba(255, 255, 255, 0.9) inset;
-    overflow: hidden;
-    position: relative;
-    border-right: none;
+    overflow: hidden !important;
+    position: relative !important;
+    border-right: none !important;
     opacity: 1 !important;
+    visibility: visible !important;
+    transform-style: flat !important;
+    transform: none !important;
   }
 
   .portal-inner {
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
+    transform-style: flat !important;
+    position: relative !important;
   }
 
   .portal-depth-name {
-    font-size: clamp(5rem, 24vw, 8rem);
-    top: 10%;
+    font-size: clamp(5rem, 24vw, 8rem) !important;
+    top: 8% !important;
+    left: 50% !important;
+    transform: translate(-50%, 0) !important;
+    transform-style: flat !important;
+    z-index: 2 !important;
+    opacity: 0.88 !important;
+    visibility: visible !important;
   }
 
   .portal-subject-wrapper {
-    height: 84%;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    transform-style: flat !important;
+    height: 84% !important;
+    max-height: 500px !important;
+    width: 100% !important;
+    z-index: 3 !important;
+    visibility: visible !important;
+  }
+
+  .portal-subject-img {
+    height: 100% !important;
+    width: auto !important;
+    max-width: 92% !important;
+    object-fit: contain !important;
+    object-position: bottom center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .portal-floor-vignette {
+    z-index: 4 !important;
   }
 
   .portal-dossier {
-    width: 100%;
-    padding: 20px 24px 24px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.96) 100%);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    width: 100% !important;
+    padding: 20px 24px 24px !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.96) 100%) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    transform: none !important;
+    transform-style: flat !important;
+    z-index: 5 !important;
+    position: relative !important;
   }
 
   .dossier-name {
@@ -753,35 +798,38 @@
   }
 
   .dossier-bio {
-    max-height: 120px;
-    opacity: 1;
-    margin-top: 6px;
-    font-size: 0.84rem;
-    line-height: 1.55;
+    max-height: 120px !important;
+    opacity: 1 !important;
+    margin-top: 6px !important;
+    font-size: 0.84rem !important;
+    line-height: 1.55 !important;
+    display: block !important;
   }
 }
 
 @media (max-width: 480px) {
   .founders-pavilion {
-    gap: var(--space-xl);
+    gap: var(--space-xl) !important;
   }
 
   .pavilion-portal {
-    height: 480px;
+    min-height: 480px !important;
+    height: 480px !important;
     border-radius: var(--radius-xl);
+    flex: 0 0 auto !important;
   }
 
   .portal-depth-name {
-    font-size: clamp(4.2rem, 20vw, 6.2rem);
-    top: 8%;
+    font-size: clamp(4.2rem, 20vw, 6.2rem) !important;
+    top: 6% !important;
   }
 
   .portal-subject-wrapper {
-    height: 80%;
+    height: 80% !important;
   }
 
   .portal-dossier {
-    padding: 16px 18px 20px;
+    padding: 16px 18px 20px !important;
   }
 
   .dossier-name {
