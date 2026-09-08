@@ -28,6 +28,7 @@ try {
 } catch {}
 
 $script:authCodes = @{}
+$script:authLinks = @{}
 
 try {
     while ($listener.IsListening) {
@@ -45,6 +46,149 @@ try {
             $response.StatusCode = 200
             $response.Close()
             continue
+        }
+
+        # -------------------------------------------------------------
+        # PASSKEY SECURITY API: Send Magic Verification Link Email
+        # -------------------------------------------------------------
+        if ($request.HttpMethod -eq "POST" -and $request.Url.LocalPath -eq "/api/auth/send-link") {
+            try {
+                $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+                $bodyStr = $reader.ReadToEnd()
+                $data = ConvertFrom-Json $bodyStr
+
+                $founderId = $data.founderId
+                $founderName = $data.founderName
+                if (-not $founderName) {
+                    switch ($founderId) {
+                        "aaqib" { $founderName = "Aaqib Nazran" }
+                        "ruhaim" { $founderName = "Ruhaim Riyaz" }
+                        "aneeq" { $founderName = "Aneeq Ahmed" }
+                        default { $founderName = "Executive Founder" }
+                    }
+                }
+
+                $origin = $data.currentOrigin
+                if (-not $origin) { $origin = "http://localhost:$port" }
+                $token = [System.Guid]::NewGuid().ToString("N")
+                $verifyUrl = "$origin/BITWISE-Dashboard/?verify_token=$token&founder=$founderId"
+                $expiresAt = [DateTimeOffset]::UtcNow.AddHours(2)
+
+                $script:authLinks[$token] = @{
+                    token = $token
+                    founderId = $founderId
+                    founderName = $founderName
+                    expiresAt = $expiresAt
+                    email = "bitwise1216@gmail.com"
+                }
+
+                Write-Host ""
+                Write-Host "=================================================" -ForegroundColor Yellow
+                Write-Host "  BITWISE EXECUTIVE SECURITY - MAGIC VERIFY LINK" -ForegroundColor Cyan
+                Write-Host "=================================================" -ForegroundColor Yellow
+                Write-Host "  Founder:           $founderName ($founderId)" -ForegroundColor White
+                Write-Host "  Destination Email: bitwise1216@gmail.com" -ForegroundColor DarkGray
+                Write-Host "  Magic Link:        $verifyUrl" -ForegroundColor Green
+                Write-Host "  Validity:          2 Hours" -ForegroundColor DarkGray
+                Write-Host "=================================================" -ForegroundColor Yellow
+                Write-Host ""
+
+                $respObj = @{
+                    success = $true
+                    message = "Verification link sent to bitwise1216@gmail.com"
+                    email = "bitwise1216@gmail.com"
+                    verifyUrl = $verifyUrl
+                    token = $token
+                }
+                $respJson = ConvertTo-Json $respObj
+                $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
+                $response.StatusCode = 200
+                $response.ContentType = "application/json; charset=utf-8"
+                $response.ContentLength64 = $respBytes.Length
+                $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
+                $response.Close()
+                continue
+            } catch {
+                Write-Host "  [Auth Link Error]: $($_.Exception.Message)" -ForegroundColor Red
+                $errObj = @{ success = $false; error = $_.Exception.Message }
+                $errJson = ConvertTo-Json $errObj
+                $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errJson)
+                $response.StatusCode = 500
+                $response.ContentType = "application/json; charset=utf-8"
+                $response.ContentLength64 = $errBytes.Length
+                $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
+                $response.Close()
+                continue
+            }
+        }
+
+        # -------------------------------------------------------------
+        # PASSKEY SECURITY API: Verify Magic Link Token
+        # -------------------------------------------------------------
+        if ($request.HttpMethod -eq "POST" -and $request.Url.LocalPath -eq "/api/auth/verify-token") {
+            try {
+                $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+                $bodyStr = $reader.ReadToEnd()
+                $data = ConvertFrom-Json $bodyStr
+
+                $token = ($data.token -as [string]).Trim()
+                $entry = $script:authLinks[$token]
+                $now = [DateTimeOffset]::UtcNow
+
+                if (-not $entry) {
+                    $respObj = @{ success = $false; error = "Invalid or consumed verification link token." }
+                    $respJson = ConvertTo-Json $respObj
+                    $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
+                    $response.StatusCode = 400
+                    $response.ContentType = "application/json; charset=utf-8"
+                    $response.ContentLength64 = $respBytes.Length
+                    $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
+                    $response.Close()
+                    continue
+                }
+
+                if ($now -gt $entry.expiresAt) {
+                    $respObj = @{ success = $false; error = "Verification link has expired. Please request a new link." }
+                    $respJson = ConvertTo-Json $respObj
+                    $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
+                    $response.StatusCode = 400
+                    $response.ContentType = "application/json; charset=utf-8"
+                    $response.ContentLength64 = $respBytes.Length
+                    $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
+                    $response.Close()
+                    continue
+                }
+
+                # Valid token!
+                $founderId = $entry.founderId
+                $founderName = $entry.founderName
+                Write-Host "  [Passkey Auth] Magic link token verified for founder: $founderName" -ForegroundColor Green
+
+                $respObj = @{
+                    success = $true
+                    verified = $true
+                    founderId = $founderId
+                    founderName = $founderName
+                }
+                $respJson = ConvertTo-Json $respObj
+                $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
+                $response.StatusCode = 200
+                $response.ContentType = "application/json; charset=utf-8"
+                $response.ContentLength64 = $respBytes.Length
+                $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
+                $response.Close()
+                continue
+            } catch {
+                $errObj = @{ success = $false; error = $_.Exception.Message }
+                $errJson = ConvertTo-Json $errObj
+                $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errJson)
+                $response.StatusCode = 500
+                $response.ContentType = "application/json; charset=utf-8"
+                $response.ContentLength64 = $errBytes.Length
+                $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
+                $response.Close()
+                continue
+            }
         }
 
         # -------------------------------------------------------------
