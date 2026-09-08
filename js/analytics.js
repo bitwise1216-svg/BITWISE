@@ -83,18 +83,9 @@
     }
   }
 
-  // 5. Automated Visitor Arrival Notification to bitwise1216@gmail.com
-  function sendVisitorEmailAlert(event) {
-    const ALERT_SESSION_KEY = 'bitwise_visitor_alert_dispatched';
-    try {
-      if (sessionStorage.getItem(ALERT_SESSION_KEY)) {
-        // Already dispatched an alert for this user's browsing session
-        return;
-      }
-      sessionStorage.setItem(ALERT_SESSION_KEY, 'true');
-    } catch (e) {}
-
-    // Asynchronously resolve GeoIP with a 1.6s timeout for high speed
+  // 5. Real-Time Visitor Telemetry & Dashboard Streaming (No automated email sending)
+  function dispatchVisitorTelemetry(event) {
+    // Fast GeoIP lookup with a 1.6s timeout for instant geographic resolution
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const timeoutId = controller ? setTimeout(function () { controller.abort(); }, 1600) : null;
 
@@ -102,48 +93,57 @@
       .then(function (res) { return res.json(); })
       .then(function (geo) {
         if (timeoutId) clearTimeout(timeoutId);
-        dispatchVisitorEmail(event, geo);
+        if (geo) {
+          event.location = geo.cityName ? (geo.cityName + ', ' + (geo.countryName || '')) : (geo.countryName || 'Direct / Private');
+          event.ip = geo.ipAddress || 'Anonymous';
+          broadcastVisitToDashboard(event);
+        }
       })
       .catch(function () {
         if (timeoutId) clearTimeout(timeoutId);
-        dispatchVisitorEmail(event, null);
+        event.location = 'Direct / Private';
+        event.ip = 'Anonymous';
+        broadcastVisitToDashboard(event);
       });
+
+    // Also attempt local studio server telemetry endpoint if available
+    try {
+      fetch('/api/analytics/visit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(event)
+      }).catch(function () {});
+    } catch (e) {}
   }
 
-  function dispatchVisitorEmail(event, geo) {
-    var locationStr = geo && geo.cityName ? (geo.cityName + ', ' + (geo.countryName || '')) : (geo && geo.countryName ? geo.countryName : 'Direct / Private');
-    var ipStr = geo && geo.ipAddress ? geo.ipAddress : 'Anonymous';
+  function broadcastVisitToDashboard(event) {
+    // Update event in localStorage with enriched location
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_EVENTS);
+      if (raw) {
+        const events = JSON.parse(raw);
+        const idx = events.findIndex(function (e) { return e.id === event.id; });
+        if (idx !== -1) {
+          events[idx] = event;
+          localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(events));
+        }
+      }
+    } catch (e) {}
 
-    var payload = {
-      name: 'Visitor Arrival (' + (event.device || 'Web') + ')',
-      email: 'visitor@bitwise.studio',
-      visitor_alert: 'New visitor entered bitwise. studio',
-      landing_page: window.location.href || event.page || '/',
-      referrer_source: event.referrer || 'Direct',
-      device_type: event.device || 'Desktop',
-      browser: event.browser || 'Browser',
-      operating_system: event.os || 'OS',
-      screen_resolution: (event.screenWidth || window.innerWidth) + 'x' + (event.screenHeight || window.innerHeight),
-      estimated_location: locationStr,
-      visitor_ip: ipStr,
-      visitor_id: event.visitorId,
-      session_id: event.sessionId,
-      arrival_time: new Date().toLocaleString(),
-      _subject: '🌐 [BITWISE Telemetry] New Visitor Arrival - ' + (event.device || 'Visitor') + ' (' + locationStr + ')',
-      _template: 'table',
-      _captcha: 'false'
-    };
+    // Broadcast updated event with location to the executive dashboard
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const channel = new BroadcastChannel(CHANNEL_NAME);
+        channel.postMessage({ type: 'NEW_VISIT', data: event });
+        channel.close();
+      } catch (e) {}
+    }
 
-    fetch('https://formsubmit.co/ajax/bitwise1216@gmail.com', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    }).catch(function (err) {
-      console.warn('[bitwise. telemetry] Visitor alert notice:', err);
-    });
+    if (window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage({ type: 'NEW_VISIT', data: event }, '*');
+      } catch (e) {}
+    }
   }
 
   // 6. Track Pageview
@@ -167,7 +167,9 @@
       referrer: referrer,
       screenWidth: window.innerWidth,
       screenHeight: window.innerHeight,
-      language: navigator.language || 'en'
+      language: navigator.language || 'en',
+      location: 'Detecting...',
+      ip: 'Anonymous'
     };
 
     // Save to LocalStorage (retaining last 500 events)
@@ -200,8 +202,8 @@
       window.dispatchEvent(new CustomEvent('bitwise:visit', { detail: event }));
     } catch (e) {}
 
-    // Automated entry email notification to bitwise1216@gmail.com
-    sendVisitorEmailAlert(event);
+    // Dispatch real-time telemetry to Dashboard & Server (Emails completely removed)
+    dispatchVisitorTelemetry(event);
   }
 
   // 6. Track Session Duration on Exit

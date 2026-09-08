@@ -31,4 +31,9 @@ if ([System.Text.RegularExpressions.Regex]::IsMatch($jsContent, $pattInit)) {
     Write-Host "  [OK] Session initialization verified with clean encoding." -ForegroundColor Green
 }
 
+# Verify Executive Notifications & Desktop Alerts controller
+if ($jsContent.Contains("initDesktopNotifications")) {
+    Write-Host "  [OK] Executive notifications & desktop alerts verified." -ForegroundColor Green
+}
+
 Write-Host "Verification complete - all dashboard scripts and passkeys are in sync." -ForegroundColor Green

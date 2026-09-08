@@ -418,6 +418,85 @@ try {
             }
         }
 
+        # -------------------------------------------------------------
+        # TELEMETRY API: Store and Stream Live Visitor Analytics Events
+        # -------------------------------------------------------------
+        if ($request.Url.LocalPath -eq "/api/analytics/visit" -and $request.HttpMethod -eq "POST") {
+            try {
+                $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+                $bodyStr = $reader.ReadToEnd()
+                $eventData = ConvertFrom-Json $bodyStr
+
+                $eventsFile = Join-Path $dashboardDir "data\events.json"
+                $dataDir = Join-Path $dashboardDir "data"
+                if (-not (Test-Path $dataDir)) {
+                    New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
+                }
+
+                $existingEvents = @()
+                if (Test-Path $eventsFile) {
+                    try {
+                        $rawEvents = [System.IO.File]::ReadAllText($eventsFile, [System.Text.Encoding]::UTF8)
+                        $existingEvents = @(ConvertFrom-Json $rawEvents)
+                    } catch {}
+                }
+
+                # Avoid duplicate insertion for identical event ID
+                if (-not ($existingEvents | Where-Object { $_.id -eq $eventData.id })) {
+                    $updatedEvents = @($eventData) + $existingEvents
+                    if ($updatedEvents.Count -gt 500) {
+                        $updatedEvents = $updatedEvents[0..499]
+                    }
+                    $jsonEvents = ConvertTo-Json $updatedEvents -Depth 6
+                    [System.IO.File]::WriteAllText($eventsFile, $jsonEvents, [System.Text.Encoding]::UTF8)
+                }
+
+                Write-Host "  [Live Visitor] $($eventData.device) on $($eventData.page) ($($eventData.location))" -ForegroundColor DarkCyan
+
+                $respObj = @{ success = $true }
+                $respJson = ConvertTo-Json $respObj
+                $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
+                $response.StatusCode = 200
+                $response.ContentType = "application/json; charset=utf-8"
+                $response.ContentLength64 = $respBytes.Length
+                $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
+                $response.Close()
+                continue
+            } catch {
+                $errObj = @{ success = $false; error = $_.Exception.Message }
+                $errJson = ConvertTo-Json $errObj
+                $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errJson)
+                $response.StatusCode = 500
+                $response.ContentType = "application/json; charset=utf-8"
+                $response.ContentLength64 = $errBytes.Length
+                $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
+                $response.Close()
+                continue
+            }
+        }
+
+        if ($request.Url.LocalPath -eq "/api/analytics/events" -and $request.HttpMethod -eq "GET") {
+            try {
+                $eventsFile = Join-Path $dashboardDir "data\events.json"
+                $eventsJson = "[]"
+                if (Test-Path $eventsFile) {
+                    $eventsJson = [System.IO.File]::ReadAllText($eventsFile, [System.Text.Encoding]::UTF8)
+                }
+
+                $respBytes = [System.Text.Encoding]::UTF8.GetBytes($eventsJson)
+                $response.StatusCode = 200
+                $response.ContentType = "application/json; charset=utf-8"
+                $response.ContentLength64 = $respBytes.Length
+                $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
+                $response.Close()
+                continue
+            } catch {
+                $response.StatusCode = 500
+                $response.Close()
+                continue
+            }
+        }
+
         # Handle 1-Click Automated Publishing API
         if ($request.HttpMethod -eq "POST" -and $request.Url.LocalPath -eq "/api/publish") {
             try {
