@@ -25,15 +25,15 @@ window.BITWISE_SITE_DATA = {
     "team-subtitle": "Three visionary creators crafting the next generation of visual experiences.",
     "founder-1-depth": "AAQIB",
     "founder-1-name": "Aaqib Nazran",
-    "founder-1-role": "Co-Founder Â· Creative Director",
+    "founder-1-role": "Co-Founder · Creative Director",
     "founder-1-bio": "Shapes the studio's aesthetic compass, brand worldbuilding, and executive visual storytelling across global productions.",
     "founder-2-depth": "RUHAIM",
     "founder-2-name": "Ruhaim Riyaz",
-    "founder-2-role": "Co-Founder Â· Lead Cinematographer",
+    "founder-2-role": "Co-Founder · Lead Cinematographer",
     "founder-2-bio": "Master of motion, lighting, and camera choreography. Crafts cinematic brand films that balance technical precision with emotion.",
     "founder-3-depth": "ANEEQ",
     "founder-3-name": "Aneeq Ahmed",
-    "founder-3-role": "Co-Founder Â· Head of Production",
+    "founder-3-role": "Co-Founder · Head of Production",
     "founder-3-bio": "Spearheads high-precision production architecture, executive delivery, and cross-media design execution for studio projects.",
     "photo-title": "Photography Gallery",
     "photo-subtitle": "Selected work from our editorial and brand photography projects.",
@@ -190,6 +190,7 @@ window.BITWISE_SITE_DATA = {
     "founder-3-img": "assets/Founders/Aneeq Ahmed-cutout.png"
   }
 };
+
 
 
 
