@@ -49,3 +49,24 @@
   font-style: normal;
   font-display: swap;
 }
+
+/* ── 4. Dugas (Architectural Ultra-Condensed Monolith Depth Typeface) ── */
+@font-face {
+  font-family: 'Dugas';
+  src: url('../assets/fonts/Dugas.woff2') format('woff2'),
+       url('../assets/fonts/Dugas.woff') format('woff'),
+       url('../assets/fonts/Dugas.ttf') format('truetype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Dugas Pro';
+  src: url('../assets/fonts/Dugas-Pro.woff2') format('woff2'),
+       url('../assets/fonts/Dugas-Pro.ttf') format('truetype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+

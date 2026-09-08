@@ -544,17 +544,30 @@ try {
                 ".png"  { "image/png" }
                 ".webp" { "image/webp" }
                 ".svg"  { "image/svg+xml" }
+                ".woff2" { "font/woff2" }
+                ".woff"  { "font/woff" }
+                ".ttf"   { "font/ttf" }
+                ".otf"   { "font/otf" }
                 default { "application/octet-stream" }
             }
             $response.ContentType = $mime
             $response.ContentLength64 = $bytes.Length
-            $response.OutputStream.Write($bytes, 0, $bytes.Length)
+            if ($request.HttpMethod -ne "HEAD") {
+                try {
+                    $response.OutputStream.Write($bytes, 0, $bytes.Length)
+                } catch {}
+            }
         } else {
             $response.StatusCode = 404
             $err = [System.Text.Encoding]::UTF8.GetBytes("404 Not Found")
-            $response.OutputStream.Write($err, 0, $err.Length)
+            $response.ContentLength64 = $err.Length
+            if ($request.HttpMethod -ne "HEAD") {
+                try {
+                    $response.OutputStream.Write($err, 0, $err.Length)
+                } catch {}
+            }
         }
-        $response.Close()
+        try { $response.Close() } catch {}
     }
 } finally {
     $listener.Stop()

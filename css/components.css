@@ -497,17 +497,17 @@
   width: 380px;
 }
 
-/* ── GIANT FIRST NAME IN BEBAS NEUE (Apple Depth Effect) ── */
+/* ── GIANT MONOLITHIC FIRST NAME IN DUGAS (Apple Depth Effect) ── */
 .portal-depth-name {
   position: absolute;
-  top: 14%;
+  top: 4%;
   left: 50%;
   transform: translate(-50%, 0) translateZ(18px);
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(5.5rem, 10.5vw, 10.2rem);
+  font-family: 'Dugas', 'Dugas Pro', 'Bebas Neue', sans-serif;
+  font-size: clamp(8.5rem, 15vw, 15rem);
   font-weight: 700;
   line-height: 0.82;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: #111111;
   text-align: center;
@@ -515,7 +515,7 @@
   z-index: 2;
   user-select: none;
   pointer-events: none;
-  opacity: 0.88;
+  opacity: 0.92;
   transform-style: preserve-3d;
   transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1),
               letter-spacing 0.65s cubic-bezier(0.16, 1, 0.3, 1),
@@ -525,8 +525,8 @@
 .pavilion-portal:hover .portal-depth-name,
 .pavilion-portal.active .portal-depth-name {
   opacity: 1;
-  letter-spacing: 0.08em;
-  transform: translate(-50%, -6px) translateZ(32px) scale(1.03);
+  letter-spacing: 0.11em;
+  transform: translate(-50%, -8px) translateZ(34px) scale(1.03);
 }
 
 /* ── FOREGROUND SUBJECT CUTOUT ── */
@@ -738,13 +738,14 @@
   }
 
   .portal-depth-name {
-    font-size: clamp(5rem, 24vw, 8rem) !important;
-    top: 8% !important;
+    font-size: clamp(7.5rem, 26vw, 11rem) !important;
+    top: 4% !important;
     left: 50% !important;
+    letter-spacing: 0.06em !important;
     transform: translate(-50%, 0) !important;
     transform-style: flat !important;
     z-index: 2 !important;
-    opacity: 0.88 !important;
+    opacity: 0.92 !important;
     visibility: visible !important;
   }
 
@@ -820,8 +821,9 @@
   }
 
   .portal-depth-name {
-    font-size: clamp(4.2rem, 20vw, 6.2rem) !important;
-    top: 6% !important;
+    font-size: clamp(6.5rem, 23vw, 9.2rem) !important;
+    top: 3% !important;
+    letter-spacing: 0.05em !important;
   }
 
   .portal-subject-wrapper {
