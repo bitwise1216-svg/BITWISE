@@ -12,13 +12,28 @@ Write-Host "=================================================" -ForegroundColor 
 Write-Host "  bitwise. Studio & Executive Admin Dashboard" -ForegroundColor White
 Write-Host "=================================================" -ForegroundColor Cyan
 Write-Host ""
+$lanIp = "localhost"
+try {
+    $ips = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.InterfaceAlias -notlike "*Loopback*" -and ($_.IPAddress -like "192.168.*" -or $_.IPAddress -like "10.*" -or $_.IPAddress -like "172.*") }
+    if ($ips) { $lanIp = $ips[0].IPAddress }
+} catch {}
+
 Write-Host "Serving from: $parentDir" -ForegroundColor DarkGray
 Write-Host "Website:   http://localhost:$port/BITWISE/" -ForegroundColor Green
 Write-Host "Dashboard: http://localhost:$port/BITWISE-Dashboard/" -ForegroundColor Yellow
+if ($lanIp -ne "localhost") {
+    Write-Host "Mobile LAN (iPhone / Redmi): http://$($lanIp):$port/BITWISE-Dashboard/" -ForegroundColor Cyan
+}
 Write-Host ""
 
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$port/")
+$listener.Prefixes.Add("http://127.0.0.1:$port/")
+try {
+    if ($lanIp -ne "localhost") {
+        $listener.Prefixes.Add("http://$($lanIp):$port/")
+    }
+} catch {}
 $listener.Start()
 Write-Host "Server listening at http://localhost:$port/ (Press Ctrl+C to stop)" -ForegroundColor Green
 
@@ -26,9 +41,6 @@ Write-Host "Server listening at http://localhost:$port/ (Press Ctrl+C to stop)" 
 try {
     Start-Process "http://localhost:$port/BITWISE-Dashboard/"
 } catch {}
-
-$script:authCodes = @{}
-$script:authLinks = @{}
 
 try {
     while ($listener.IsListening) {
@@ -49,322 +61,23 @@ try {
         }
 
         # -------------------------------------------------------------
-        # PASSKEY SECURITY API: Send Magic Verification Link Email
+        # INQUIRIES API: Store, Synchronize and Stream Client Leads
         # -------------------------------------------------------------
-        if ($request.HttpMethod -eq "POST" -and $request.Url.LocalPath -eq "/api/auth/send-link") {
-            try {
-                $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
-                $bodyStr = $reader.ReadToEnd()
-                $data = ConvertFrom-Json $bodyStr
-
-                $founderId = $data.founderId
-                $founderName = $data.founderName
-                if (-not $founderName) {
-                    switch ($founderId) {
-                        "aaqib" { $founderName = "Aaqib Nazran" }
-                        "ruhaim" { $founderName = "Ruhaim Riyaz" }
-                        "aneeq" { $founderName = "Aneeq Ahmed" }
-                        default { $founderName = "Executive Founder" }
-                    }
-                }
-
-                $origin = $data.currentOrigin
-                if (-not $origin) { $origin = "http://localhost:$port" }
-                $token = [System.Guid]::NewGuid().ToString("N")
-                $verifyUrl = "$origin/BITWISE-Dashboard/?verify_token=$token&founder=$founderId"
-                $expiresAt = [DateTimeOffset]::UtcNow.AddHours(2)
-
-                $script:authLinks[$token] = @{
-                    token = $token
-                    founderId = $founderId
-                    founderName = $founderName
-                    expiresAt = $expiresAt
-                    email = "bitwise1216@gmail.com"
-                }
-
-                Write-Host ""
-                Write-Host "=================================================" -ForegroundColor Yellow
-                Write-Host "  BITWISE EXECUTIVE SECURITY - MAGIC VERIFY LINK" -ForegroundColor Cyan
-                Write-Host "=================================================" -ForegroundColor Yellow
-                Write-Host "  Founder:           $founderName ($founderId)" -ForegroundColor White
-                Write-Host "  Destination Email: bitwise1216@gmail.com" -ForegroundColor DarkGray
-                Write-Host "  Magic Link:        $verifyUrl" -ForegroundColor Green
-                Write-Host "  Validity:          2 Hours" -ForegroundColor DarkGray
-                Write-Host "=================================================" -ForegroundColor Yellow
-                Write-Host ""
-
-                $respObj = @{
-                    success = $true
-                    message = "Verification link sent to bitwise1216@gmail.com"
-                    email = "bitwise1216@gmail.com"
-                    verifyUrl = $verifyUrl
-                    token = $token
-                }
-                $respJson = ConvertTo-Json $respObj
-                $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
-                $response.StatusCode = 200
-                $response.ContentType = "application/json; charset=utf-8"
-                $response.ContentLength64 = $respBytes.Length
-                $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
-                $response.Close()
-                continue
-            } catch {
-                Write-Host "  [Auth Link Error]: $($_.Exception.Message)" -ForegroundColor Red
-                $errObj = @{ success = $false; error = $_.Exception.Message }
-                $errJson = ConvertTo-Json $errObj
-                $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errJson)
-                $response.StatusCode = 500
-                $response.ContentType = "application/json; charset=utf-8"
-                $response.ContentLength64 = $errBytes.Length
-                $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
-                $response.Close()
-                continue
-            }
-        }
-
-        # -------------------------------------------------------------
-        # PASSKEY SECURITY API: Verify Magic Link Token
-        # -------------------------------------------------------------
-        if ($request.HttpMethod -eq "POST" -and $request.Url.LocalPath -eq "/api/auth/verify-token") {
-            try {
-                $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
-                $bodyStr = $reader.ReadToEnd()
-                $data = ConvertFrom-Json $bodyStr
-
-                $token = ($data.token -as [string]).Trim()
-                $entry = $script:authLinks[$token]
-                $now = [DateTimeOffset]::UtcNow
-
-                if (-not $entry) {
-                    $respObj = @{ success = $false; error = "Invalid or consumed verification link token." }
-                    $respJson = ConvertTo-Json $respObj
-                    $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
-                    $response.StatusCode = 400
-                    $response.ContentType = "application/json; charset=utf-8"
-                    $response.ContentLength64 = $respBytes.Length
-                    $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
-                    $response.Close()
-                    continue
-                }
-
-                if ($now -gt $entry.expiresAt) {
-                    $respObj = @{ success = $false; error = "Verification link has expired. Please request a new link." }
-                    $respJson = ConvertTo-Json $respObj
-                    $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
-                    $response.StatusCode = 400
-                    $response.ContentType = "application/json; charset=utf-8"
-                    $response.ContentLength64 = $respBytes.Length
-                    $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
-                    $response.Close()
-                    continue
-                }
-
-                # Valid token!
-                $founderId = $entry.founderId
-                $founderName = $entry.founderName
-                Write-Host "  [Passkey Auth] Magic link token verified for founder: $founderName" -ForegroundColor Green
-
-                $respObj = @{
-                    success = $true
-                    verified = $true
-                    founderId = $founderId
-                    founderName = $founderName
-                }
-                $respJson = ConvertTo-Json $respObj
-                $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
-                $response.StatusCode = 200
-                $response.ContentType = "application/json; charset=utf-8"
-                $response.ContentLength64 = $respBytes.Length
-                $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
-                $response.Close()
-                continue
-            } catch {
-                $errObj = @{ success = $false; error = $_.Exception.Message }
-                $errJson = ConvertTo-Json $errObj
-                $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errJson)
-                $response.StatusCode = 500
-                $response.ContentType = "application/json; charset=utf-8"
-                $response.ContentLength64 = $errBytes.Length
-                $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
-                $response.Close()
-                continue
-            }
-        }
-
-        # -------------------------------------------------------------
-        # PASSKEY SECURITY API: Send Email OTP Code
-        # -------------------------------------------------------------
-        if ($request.HttpMethod -eq "POST" -and $request.Url.LocalPath -eq "/api/auth/send-code") {
-            try {
-                $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
-                $bodyStr = $reader.ReadToEnd()
-                $data = ConvertFrom-Json $bodyStr
-
-                $founderId = $data.founderId
-                $founderName = $data.founderName
-                if (-not $founderName) {
-                    switch ($founderId) {
-                        "aaqib" { $founderName = "Aaqib Nazran" }
-                        "ruhaim" { $founderName = "Ruhaim Riyaz" }
-                        "aneeq" { $founderName = "Aneeq Ahmed" }
-                        default { $founderName = "Executive Founder" }
-                    }
-                }
-
-                # Generate secure 6-digit numeric OTP
-                $code = (Get-Random -Minimum 100000 -Maximum 999999).ToString()
-                $expiresAt = [DateTimeOffset]::UtcNow.AddMinutes(15)
-
-                $script:authCodes[$founderId] = @{
-                    code = $code
-                    founderName = $founderName
-                    expiresAt = $expiresAt
-                    email = "bitwise1216@gmail.com"
-                }
-
-                Write-Host ""
-                Write-Host "=================================================" -ForegroundColor Yellow
-                Write-Host "  BITWISE EXECUTIVE SECURITY GATEWAY - PASSKEY OTP" -ForegroundColor Cyan
-                Write-Host "=================================================" -ForegroundColor Yellow
-                Write-Host "  Founder:           $founderName ($founderId)" -ForegroundColor White
-                Write-Host "  Destination Email: bitwise1216@gmail.com" -ForegroundColor DarkGray
-                Write-Host "  Verification Code: $code" -ForegroundColor Green
-                Write-Host "  Validity:          15 Minutes" -ForegroundColor DarkGray
-                Write-Host "=================================================" -ForegroundColor Yellow
-                Write-Host ""
-
-                $respObj = @{
-                    success = $true
-                    message = "Verification code generated and dispatched to bitwise1216@gmail.com"
-                    email = "bitwise1216@gmail.com"
-                    code = $code
-                    expiresIn = 900
-                }
-                $respJson = ConvertTo-Json $respObj
-                $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
-                $response.StatusCode = 200
-                $response.ContentType = "application/json; charset=utf-8"
-                $response.ContentLength64 = $respBytes.Length
-                $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
-                $response.Close()
-                continue
-            } catch {
-                Write-Host "  [Auth Error]: $($_.Exception.Message)" -ForegroundColor Red
-                $errObj = @{ success = $false; error = $_.Exception.Message }
-                $errJson = ConvertTo-Json $errObj
-                $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errJson)
-                $response.StatusCode = 500
-                $response.ContentType = "application/json; charset=utf-8"
-                $response.ContentLength64 = $errBytes.Length
-                $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
-                $response.Close()
-                continue
-            }
-        }
-
-        # -------------------------------------------------------------
-        # PASSKEY SECURITY API: Verify Email OTP Code
-        # -------------------------------------------------------------
-        if ($request.HttpMethod -eq "POST" -and $request.Url.LocalPath -eq "/api/auth/verify-code") {
-            try {
-                $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
-                $bodyStr = $reader.ReadToEnd()
-                $data = ConvertFrom-Json $bodyStr
-
-                $founderId = $data.founderId
-                $inputCode = ($data.code -as [string]).Trim()
-
-                $entry = $script:authCodes[$founderId]
-                $now = [DateTimeOffset]::UtcNow
-
-                if (-not $entry -or -not $entry.code) {
-                    $respObj = @{ success = $false; error = "No verification code requested for this founder." }
-                    $respJson = ConvertTo-Json $respObj
-                    $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
-                    $response.StatusCode = 400
-                    $response.ContentType = "application/json; charset=utf-8"
-                    $response.ContentLength64 = $respBytes.Length
-                    $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
-                    $response.Close()
-                    continue
-                }
-
-                if ($now -gt $entry.expiresAt) {
-                    $respObj = @{ success = $false; error = "Verification code has expired. Please request a new one." }
-                    $respJson = ConvertTo-Json $respObj
-                    $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
-                    $response.StatusCode = 400
-                    $response.ContentType = "application/json; charset=utf-8"
-                    $response.ContentLength64 = $respBytes.Length
-                    $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
-                    $response.Close()
-                    continue
-                }
-
-                if ($inputCode -ne $entry.code) {
-                    $respObj = @{ success = $false; error = "Invalid code. Please enter the 6-digit code sent to bitwise1216@gmail.com." }
-                    $respJson = ConvertTo-Json $respObj
-                    $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
-                    $response.StatusCode = 400
-                    $response.ContentType = "application/json; charset=utf-8"
-                    $response.ContentLength64 = $respBytes.Length
-                    $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
-                    $response.Close()
-                    continue
-                }
-
-                # Successfully verified!
-                $enrollmentToken = [System.Guid]::NewGuid().ToString()
-                $script:authCodes.Remove($founderId)
-                Write-Host "  [Passkey Auth] Code verified successfully for founder: $founderId" -ForegroundColor Green
-
-                $respObj = @{
-                    success = $true
-                    verified = $true
-                    founderId = $founderId
-                    enrollmentToken = $enrollmentToken
-                }
-                $respJson = ConvertTo-Json $respObj
-                $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
-                $response.StatusCode = 200
-                $response.ContentType = "application/json; charset=utf-8"
-                $response.ContentLength64 = $respBytes.Length
-                $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
-                $response.Close()
-                continue
-            } catch {
-                $errObj = @{ success = $false; error = $_.Exception.Message }
-                $errJson = ConvertTo-Json $errObj
-                $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errJson)
-                $response.StatusCode = 500
-                $response.ContentType = "application/json; charset=utf-8"
-                $response.ContentLength64 = $errBytes.Length
-                $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
-                $response.Close()
-                continue
-            }
-        }
-
-        # -------------------------------------------------------------
-        # PASSKEY SECURITY API: Manage Registered Passkeys
-        # -------------------------------------------------------------
-        if ($request.Url.LocalPath -eq "/api/auth/passkeys") {
-            $passkeysDir = Join-Path $dashboardDir "data"
-            $passkeysFile = Join-Path $passkeysDir "passkeys.json"
-            if (-not (Test-Path $passkeysDir)) {
-                New-Item -ItemType Directory -Path $passkeysDir -Force | Out-Null
+        if ($request.Url.LocalPath -eq "/api/inquiries") {
+            $inquiriesDir = Join-Path $dashboardDir "data"
+            $inquiriesFile = Join-Path $inquiriesDir "inquiries.json"
+            if (-not (Test-Path $inquiriesDir)) {
+                New-Item -ItemType Directory -Path $inquiriesDir -Force | Out-Null
             }
 
             if ($request.HttpMethod -eq "GET") {
-                $passkeysList = @()
-                if (Test-Path $passkeysFile) {
+                $listJson = "[]"
+                if (Test-Path $inquiriesFile) {
                     try {
-                        $raw = [System.IO.File]::ReadAllText($passkeysFile, [System.Text.Encoding]::UTF8)
-                        $passkeysList = ConvertFrom-Json $raw
+                        $listJson = [System.IO.File]::ReadAllText($inquiriesFile, [System.Text.Encoding]::UTF8)
                     } catch {}
                 }
-                $respJson = ConvertTo-Json $passkeysList
-                $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
+                $respBytes = [System.Text.Encoding]::UTF8.GetBytes($listJson)
                 $response.StatusCode = 200
                 $response.ContentType = "application/json; charset=utf-8"
                 $response.ContentLength64 = $respBytes.Length
@@ -377,25 +90,34 @@ try {
                 try {
                     $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
                     $bodyStr = $reader.ReadToEnd()
-                    $payload = ConvertFrom-Json $bodyStr
+                    $inquiryData = ConvertFrom-Json $bodyStr
 
                     $existing = @()
-                    if (Test-Path $passkeysFile) {
+                    if (Test-Path $inquiriesFile) {
                         try {
-                            $raw = [System.IO.File]::ReadAllText($passkeysFile, [System.Text.Encoding]::UTF8)
+                            $raw = [System.IO.File]::ReadAllText($inquiriesFile, [System.Text.Encoding]::UTF8)
                             $existing = @(ConvertFrom-Json $raw)
                         } catch {}
                     }
 
-                    # Filter out older passkey for same founder if updating
-                    $filtered = @($existing | Where-Object { $_.founderId -ne $payload.founderId })
-                    $filtered += $payload
+                    if (-not ($existing | Where-Object { $_.id -eq $inquiryData.id })) {
+                        $existing = @($inquiryData) + $existing
+                        if ($existing.Count -gt 200) { $existing = $existing[0..199] }
+                        $savedJson = ConvertTo-Json $existing -Depth 6
+                        [System.IO.File]::WriteAllText($inquiriesFile, $savedJson, [System.Text.Encoding]::UTF8)
+                    }
 
-                    $savedJson = ConvertTo-Json $filtered -Depth 5
-                    [System.IO.File]::WriteAllText($passkeysFile, $savedJson, [System.Text.Encoding]::UTF8)
-                    Write-Host "  [Passkey Saved] Stored biometric passkey credential for $($payload.founderId)" -ForegroundColor Green
+                    Write-Host ""
+                    Write-Host "=================================================" -ForegroundColor Green
+                    Write-Host "  🚨 NEW CLIENT RESPONSE / INQUIRY RECEIVED" -ForegroundColor Green
+                    Write-Host "=================================================" -ForegroundColor Green
+                    Write-Host "  Client:  $($inquiryData.name) ($($inquiryData.email))" -ForegroundColor White
+                    Write-Host "  Focus:   $($inquiryData.service)" -ForegroundColor Cyan
+                    Write-Host "  Message: $($inquiryData.message)" -ForegroundColor DarkGray
+                    Write-Host "=================================================" -ForegroundColor Green
+                    Write-Host ""
 
-                    $respObj = @{ success = $true; message = "Passkey registered and securely persisted." }
+                    $respObj = @{ success = $true; inquiry = $inquiryData }
                     $respJson = ConvertTo-Json $respObj
                     $respBytes = [System.Text.Encoding]::UTF8.GetBytes($respJson)
                     $response.StatusCode = 200
@@ -407,11 +129,11 @@ try {
                 } catch {
                     $errObj = @{ success = $false; error = $_.Exception.Message }
                     $errJson = ConvertTo-Json $errObj
-                    $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errJson)
+                    $respBytes = [System.Text.Encoding]::UTF8.GetBytes($errJson)
                     $response.StatusCode = 500
                     $response.ContentType = "application/json; charset=utf-8"
-                    $response.ContentLength64 = $errBytes.Length
-                    $response.OutputStream.Write($errBytes, 0, $errBytes.Length)
+                    $response.ContentLength64 = $respBytes.Length
+                    $response.OutputStream.Write($respBytes, 0, $respBytes.Length)
                     $response.Close()
                     continue
                 }

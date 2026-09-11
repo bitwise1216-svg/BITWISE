@@ -488,7 +488,16 @@
           }
         } catch (err) {}
 
-        // 3. Automated FormSubmit Dispatch + Automated Confirmation to Visitor
+        // 3. Dispatch to Studio Dashboard Server (/api/inquiries) if active
+        try {
+          fetch('/api/inquiries', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(inquiry)
+          }).catch(function () {});
+        } catch (err) {}
+
+        // 4. Automated FormSubmit Dispatch + Automated Confirmation to Visitor
         const payload = {
           name: inquiry.name,
           email: inquiry.email,
